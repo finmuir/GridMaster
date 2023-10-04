@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Google Maps API Example</title>
+  <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Didact Gothic', sans-serif;
+      overflow: hidden;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .page-container {
+      padding: 20px;
+      height: 70vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #background {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://developers.google.com/static/earth-engine/images/datasets/sentinel2_france_1280.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      filter: blur(8px);
+      z-index: -1;
+    }
+
+    #sidebar {
+      position: fixed;
+      padding-top: 70px;
+      right: 0;
+      top: 0;
+      width: 200px;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+      display: none; /* initially hidden */
+    }
+
+    .sidebar a {
+      display: block; /* Make the links appear below each other */
+      color: #f2f2f2; /* Color of links */
+      padding: 15px; /* Padding inside the sidebar */
+      text-decoration: none; /* Remove underline from links */
+    }
+
+    .sidebar a:hover {
+      background-color: #ddd; /* Change color of links on hover */
+      color: black;
+    }
+
+    #sidebar-button, #close-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 30px;
+      background: none;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      outline: none;
+      z-index: 1;
+    }
+
+    #map-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 600px;/* Adjust height */
+      width: 750px; /* Adjust width */
+      position: relative;
+      z-index: 1;
+      top: 15%; /* Move down */
+      left: -23%; /* Move left */
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+    }
+
+    html, body {
+      height: 100vh; /* Set this to 100vh */
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #content-container {
+      display: flex;
+      background-color: rgba(248, 248, 248, 0.8);
+      justify-content: center;
+      align-items: center;
+      height: 500px;/* Adjust height */
+      width: 650px; /* Adjust width */
+      position: absolute; /* Changed to absolute */
+      z-index: 1;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+      left: 55%; /* Adjusted to give 200px gap */
+      top: 20%;
+    }
+
+    .container-title {
+      position: absolute;
+      top: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      color: #666666;
+    }
+  </style>
+</head>
+<body>
+<a href="{{ url_for('welcome') }}">
+  <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
+</a>
+  <button id="sidebar-button">&#9776;</button>
+  <button id="close-button" style="display: none;">&#10006;</button>
+  <div class="page-container">
+    <div id="background"></div>
+    <div id="sidebar" class="sidebar">
+    <a href="https://github.com/finmuir/powergen-py">GitHub</a>
+    <a href="#">About Us</a>
+    <a href="#">Contact</a>
+  </div>
+    <div id="map-container">
+   <h2 style="position: absolute; top: -80px; left: 50%; transform: translateX(-50%); z-index: 2; color: #aaa;">Minigrid Implementation:</h2>
+    <div id="map"></div>
+  </div>
+    <div id="content-container">
+      <h2 class="container-title">Implementation Data</h2>
+  </div>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script>
+    var sidebarButton = document.getElementById('sidebar-button');
+    var closeButton = document.getElementById('close-button');
+    var sidebar = document.getElementById('sidebar');
+
+    sidebarButton.onclick = function() {
+      sidebar.style.display = 'block';
+      sidebarButton.style.display = 'none';
+      closeButton.style.display = 'block';
+    }
+
+    closeButton.onclick = function() {
+      sidebar.style.display = 'none';
+      closeButton.style.display = 'none';
+      sidebarButton.style.display = 'block';
+    }
+  </script>
+  <script type="text/javascript">
+    var sourceLat = {{ source_lat }};
+    var sourceLng = {{ source_lng }};
+    function initialize() {
+      initMap(sourceLat, sourceLng);
+    }
+  </script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAXvwU9elhB31GxGEss4zouagyPNiNFiLY&callback=initialize" async defer></script>
+</body>
+</html>
+

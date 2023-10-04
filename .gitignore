@@ -1,0 +1,45 @@
+# ignore excel files
+# *.xlsx
+# *.xls
+
+# ignore csv files
+# *.csv
+
+# ignore python cache
+__pycache__
+
+# ignore test code
+test.py
+test?.py
+
+# ignore png files
+*.png
+
+# ignore vscode files
+.vscode
+
+#ignore flask files
+venv/
+
+*.pyc
+__pycache__/
+
+instance/
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+dist/
+build/
+*.egg-info/
+
+*.xml
+
+# User-specific stuff
+# PyCharm-related files
+.idea/**/workspace.xml
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf

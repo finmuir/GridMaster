@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>GridMaster</title>
+  <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Didact Gothic', sans-serif;
+      overflow: hidden;
+      position: relative;
+      box-sizing: border-box; /* include padding in box size */
+    }
+    .page-container {
+      padding: 20px;
+      height: 70vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #background {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://developers.google.com/static/earth-engine/images/datasets/sentinel2_france_1280.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      filter: blur(8px);
+      z-index: -1;
+    }
+
+    .content {
+      display: flex; /* new addition */
+      justify-content: center; /* changed from space-between to center */
+      align-items: center; /* new addition */
+      width: 100%; /* new addition */
+      position: relative; /* new addition to allow absolute positioning within */
+    }
+
+    .content-main {
+      background-color: rgba(248, 248, 248, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      width: 25%; /* adjusted */
+      display: flex;
+      height: 300px;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      border: 1px solid white;
+      z-index: 2; /* Ensure it's above the small content box */
+    }
+
+    .content-small {
+  /* styling for the small content box */
+      background-color: rgba(248, 248, 248, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      width: 12%; /* adjust this to change the size of the small content box */
+      display: flex;
+      height: 100px; /* change this to make the small content box shorter or taller */
+      justify-content: center;
+      align-items: flex-start;
+      flex-direction: column;
+      border: 1px solid white;
+      position: absolute; /* Absolute positioning relative to the .content box */
+      right: 40vh; /* Positions it to the right */
+    }
+
+    #sidebar {
+      position: fixed;
+      padding-top: 70px;
+      right: 0;
+      top: 0;
+      width: 200px;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+      display: none; /* initially hidden */
+    }
+
+
+    .sidebar a {
+        display: block; /* Make the links appear below each other */
+        color: #f2f2f2; /* Color of links */
+        padding: 15px; /* Padding inside the sidebar */
+        text-decoration: none; /* Remove underline from links */
+    }
+
+    .sidebar a:hover {
+        background-color: #ddd; /* Change color of links on hover */
+        color: black;
+    }
+
+    #sidebar-button, #close-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 30px;
+      background: none;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      outline: none;
+      z-index: 1;
+    }
+
+    .content-small p {
+      font-weight: bold;
+    }
+
+    h1 {
+      position: absolute;
+      top: -10px;
+      left: 70px; /* Adjust as needed */
+      color: #32732c;
+      z-index: 2; /* Make sure it's on top of everything else */
+    }
+    h2 {
+      margin-top: 5px;
+      margin-bottom: 30px;
+      color: #666;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-top: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 13px;
+      font-weight: bold;
+    }
+    .input-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+
+    }
+    input[type="number"] {
+      padding: 5px;
+      font-size: 16px;
+
+    }
+    .submit-button {
+      display: block;
+      margin-top: 40px;
+      color: white;
+      background-color: #4CAF50;
+      text-decoration: none;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .submit-button:hover {
+      background-color: #45a049;
+    }
+
+    .input-container label {
+      width: 50%;
+    }
+
+    .latitude-input {
+      width: 50%;
+    }
+    .longitude-input {
+      width: 47%;
+
+    }
+    .margin-left {
+      margin-left: -7px;
+    }
+
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('welcome') }}">
+        <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
+    </a>
+    <button id="sidebar-button">&#9776;</button>
+    <button id="close-button" style="display: none;">&#10006;</button>
+    <div class="page-container">
+        <div id="background"></div>
+        <div id="sidebar" class="sidebar">
+            <a href="https://github.com/finmuir/powergen-py">GitHub</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact</a>
+        </div>
+        <div class="content">
+            <div class="content-main">
+                <h2>Map Positioner</h2>
+                <form action="{{ url_for('store_source_point') }}" method="post">
+                    <div class="input-container">
+                        <label for="source_lat">Latitude:</label>
+                        <input type="number" id="source_lat" name="source_lat" class="latitude-input" step="any">
+                         <div id="source_lat_error" style="display:none;color:red;">* Please provide a valid latitude.</div>
+                    </div>
+                    <div class="input-container">
+                        <label for="source_lng">Longitude:</label>
+                        <input type="number" id="source_lng" name="source_lng" class="longitude-input margin-left" step="any">
+                         <div id="source_lng_error" style="display:none;color:red;">* Please provide a valid longitude.</div>
+                    </div>
+                    <input type="submit" value="Submit" class="submit-button">
+                </form>
+            </div>
+            <div class="content-small">
+                <p>1. Please enter the starting location of your mini grid implementation. This will help when it comes to displaying your design on our map!</p>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+  document.getElementById('sidebar-button').onclick = function() {
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar.style.display === "" || sidebar.style.display === 'none') {
+      sidebar.style.display = 'block';
+    } else {
+      sidebar.style.display = 'none';
+    }
+}
+
+var sidebarButton = document.getElementById('sidebar-button');
+var closeButton = document.getElementById('close-button');
+var sidebar = document.getElementById('sidebar');
+
+sidebarButton.onclick = function() {
+    sidebar.style.display = 'block';
+    sidebarButton.style.display = 'none';
+    closeButton.style.display = 'block';
+}
+
+closeButton.onclick = function() {
+    sidebar.style.display = 'none';
+    closeButton.style.display = 'none';
+    sidebarButton.style.display = 'block';
+}
+
+var form = document.querySelector('form');
+form.onsubmit = function(e) {
+    var sourceLat = document.getElementById('source_lat');
+    var sourceLng = document.getElementById('source_lng');
+    var latError = document.getElementById('source_lat_error');
+    var lngError = document.getElementById('source_lng_error');
+
+    if (!sourceLat.value || sourceLat.value < -90 || sourceLat.value > 90) {
+      e.preventDefault();
+      latError.style.display = 'block';
+    } else {
+      latError.style.display = 'none';
+    }
+
+    if (!sourceLng.value || sourceLng.value < -180 || sourceLng.value > 180) {
+      e.preventDefault();
+      lngError.style.display = 'block';
+    } else {
+      lngError.style.display = 'none';
+    }
+}
+</script>
+</html>

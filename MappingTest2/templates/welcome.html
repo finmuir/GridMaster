@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>GridMaster</title>
+  <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Didact Gothic', sans-serif;
+      overflow: hidden;
+      position: relative;
+      box-sizing: border-box; /* include padding in box size */
+    }
+    .page-container {
+      padding: 20px;
+      height: 70vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #background {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://developers.google.com/static/earth-engine/images/datasets/sentinel2_france_1280.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      filter: blur(8px);
+      z-index: -1;
+    }
+
+    .content {
+      background-color: rgba(248, 248, 248, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      width: 45%;
+      display: flex;
+      height: 350px;
+      justify-content: flex-start;
+      align-items: center;
+      flex-direction: column;
+      max-width: 600px;
+      margin: 0 auto;
+      border: 1px solid white;
+    }
+
+        #sidebar {
+      position: fixed;
+      padding-top: 70px;
+      right: 0;
+      top: 0;
+      width: 200px;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+      display: none; /* initially hidden */
+    }
+
+
+    .sidebar a {
+        display: block; /* Make the links appear below each other */
+        color: #f2f2f2; /* Color of links */
+        padding: 15px; /* Padding inside the sidebar */
+        text-decoration: none; /* Remove underline from links */
+    }
+
+    .sidebar a:hover {
+        background-color: #ddd; /* Change color of links on hover */
+        color: black;
+    }
+
+    #sidebar-button, #close-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 30px;
+      background: none;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      outline: none;
+      z-index: 1;
+    }
+
+    h1 {
+      position: absolute;
+      top: -10px;
+      left: 70px;
+      color: #32732c;
+      z-index: 2;
+    }
+    h2 {
+        text-align: center;
+        margin-bottom: 30px; /* reduce this to bring <p> closer */
+        color: #666;
+    }
+
+    .mailing-list {
+      display: flex;
+      align-items: center;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .mailing-list-input {
+      margin-top: 0;
+      margin-bottom: 0;
+      width: 75%;  /* Increased the width to occupy more space */
+      padding: 7px;
+    }
+
+    .submit-button {
+      background-color: #F8F8F8;
+      color: #5A5A5A;
+      padding: 6px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: auto;
+      font-family: 'Didact Gothic', sans-serif;
+    }
+    
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .start-button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 30px;
+      text-decoration: none;
+      display: block;
+    }
+
+    .welcome-text {
+      margin-top: 7px;
+      text-align: center;
+      font-weight: bold; /* this line boldens the text */
+    }
+
+    .start-button:hover {
+      background-color: #45a049;
+    }
+    </style>
+</head>
+<body>
+<a href="{{ url_for('welcome') }}">
+  <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
+</a>
+  <button id="sidebar-button">&#9776;</button>
+    <button id="close-button" style="display: none;">&#10006;</button>
+  <div class="page-container">
+    <div id="background"></div>
+    <div id="sidebar" class="sidebar">
+    <a href="https://github.com/finmuir/powergen-py">GitHub</a>
+    <a href="#">About Us</a>
+    <a href="#">Contact</a>
+</div>
+    <div class="content">
+      <h2>Welcome to GridMaster!</h2>
+      <p class="welcome-text">Welcome to GridMaster! This simple tool will guide you through the process of designing a mini grid. To get started please click the 'Start' button, or to learn about GridMaster's progress navigate to the sidebar for out GitHub. For updates please join the GridMapper mailing list below:   </p>
+      <div class="mailing-list">
+         <input type="email" id="mailing-list" name="mailing-list" class="mailing-list-input">
+          <button class="submit-button">Submit</button>
+      </div>
+      <a href="/input" class="start-button">Start</a>
+    </div>
+  </div>
+<script>
+  document.getElementById('sidebar-button').onclick = function() {
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar.style.display === "" || sidebar.style.display === 'none') {
+      sidebar.style.display = 'block';
+    } else {
+      sidebar.style.display = 'none';
+    }
+  }
+
+  var sidebarButton = document.getElementById('sidebar-button');
+  var closeButton = document.getElementById('close-button');
+  var sidebar = document.getElementById('sidebar');
+
+  sidebarButton.onclick = function() {
+    sidebar.style.display = 'block';
+    sidebarButton.style.display = 'none';
+    closeButton.style.display = 'block';
+  }
+
+  closeButton.onclick = function() {
+    sidebar.style.display = 'none';
+    closeButton.style.display = 'none';
+    sidebarButton.style.display = 'block';
+  }
+</script>
+</body>
+</html>

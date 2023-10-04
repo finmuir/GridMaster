@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>GridMaster</title>
+  <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Didact Gothic', sans-serif;
+      overflow: hidden;
+      position: relative;
+      box-sizing: border-box;
+    }
+    .page-container {
+      padding: 20px;
+      height: 70vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #background {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://developers.google.com/static/earth-engine/images/datasets/sentinel2_france_1280.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      filter: blur(8px);
+      z-index: -1;
+    }
+
+    .content {
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      position: relative;
+    }
+
+    .content-main {
+      background-color: rgba(248, 248, 248, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      width: 83%;
+      display: flex;
+      height: 63vh;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      border: 1px solid white;
+      z-index: 2;
+    }
+
+    .content-small {
+      background-color: rgba(248, 248, 248, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      width: 30%;
+      display: flex;
+      height: 10vh;
+      justify-content: center;
+      align-items: flex-start;
+      flex-direction: column;
+      border: 1px solid white;
+      position: absolute;
+      right: 70vh;
+      transform: translateY(10px);
+    }
+
+    h1 {
+      position: absolute;
+      top: -10px;
+      left: 70px;
+      color: #32732c;
+      z-index: 2;
+    }
+
+    h2 {
+      color: #666;
+    }
+
+        #sidebar {
+      position: fixed;
+      padding-top: 70px;
+      right: 0;
+      top: 0;
+      width: 200px;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+          z-index: 5;
+
+    }
+
+    .sidebar a {
+        display: block;
+        color: #f2f2f2;
+        padding: 15px;
+        text-decoration: none;
+    }
+
+    .sidebar a:hover {
+        background-color: #ddd;
+        color: black;
+    }
+
+    #sidebar-button, #close-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 30px;
+      background: none;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      outline: none;
+      z-index: 6;
+    }
+
+
+    form {
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      align-items: center;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      margin-right: 30px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 13px;
+      font-weight: bold;
+    }
+
+    .input-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      width: 30%;
+    }
+
+    .input-group input {
+      width: 65%;
+    }
+
+    input[type="number"] {
+      padding: 5px;
+      font-size: 16px;
+      width: 100px;
+    }
+
+    .submit-button {
+      display: block;
+      margin-top: 40px;
+      color: white;
+      background-color: #4CAF50;
+      text-decoration: none;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .submit-button:hover {
+      background-color: #45a049;
+    }
+
+    .input-container label {
+      width: 30%;
+    }
+
+    .input-container input[type="number"] {
+      width: 30%;
+    }
+
+    .welcome-text {
+      margin-top: 7px;
+      text-align: left;
+      font-weight: bold; /
+    }
+
+    </style>
+</head>
+<body>
+<a href="{{ url_for('welcome') }}">
+  <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
+</a>
+  <div id="background"></div>
+  <div class="page-container">
+      <button id="sidebar-button">&#9776;</button>
+    <button id="close-button" style="display: none;">&#10006;</button>
+    <div id="sidebar" class="sidebar">
+    <a href="https://github.com/finmuir/powergen-py">GitHub</a>
+    <a href="#">About Us</a>
+    <a href="#">Contact</a>
+</div>
+    <div class="content">
+      <div class="content-main">
+        <h2>Generation Sizer Parameters</h2>
+        <form action="/submit" method="post">
+          <div class="row">
+            <div class="column">
+              <div class="input-group">
+                <label for="input1">Number of Particles:</label>
+                <input type="text" id="input1" name="input1">
+              </div>
+              <div class="input-group">
+                <label for="input2">PV Panel Capacity:</label>
+                <input type="text" id="input2" name="input2">
+              </div>
+              <div class="input-group">
+                <label for="input3">PV Panel Cost</label>
+                <input type="text" id="input3" name="input3">
+              </div>
+              <div class="input-group">
+                <label for="input4">Battery Cost:</label>
+                <input type="text" id="input4" name="input4">
+              </div>
+            </div>
+            <div class="column">
+              <div class="input-group">
+                <label for="input5">Diesel Generator Cost:</label>
+                <input type="text" id="input5" name="input5">
+              </div>
+              <div class="input-group">
+                <label for="input6">Fuel Cost:</label>
+                <input type="text" id="input6" name="input6">
+              </div>
+              <div class="input-group">
+                <label for="input7">Max Battery Energy:</label>
+                <input type="text" id="input7" name="input7">
+              </div>
+              <div class="input-group">
+                <label for="input8">Min Battery Energy:</label>
+                <input type="text" id="input8" name="input8">
+              </div>
+            </div>
+            <div class="column">
+              <div class="input-group">
+                <label for="input9">Diesel Generator Rated Power:</label>
+                <input type="input9" id="input9" name="input9">
+              </div>
+              <div class="input-group">
+                <label for="input10">Fuel Requirement (Litres per Hour):</label>
+                <input type="text" id="input10" name="input10">
+              </div>
+              <div class="input-group">
+                <label for="input11">Required Days of Autonomy:</label>
+                <input type="text" id="input11" name="input11">
+              </div>
+          </div>
+          </div>
+          <a href="/map" class="submit-button">Submit</a>
+        </form>
+      </div>
+      </div>
+    </div>
+  </div>
+<div class = "content-small">
+<p class="welcome-text">3. GridMaster next needs to know some information about the equipment you're using. This will help the algorithm to provide additional data that will help with your implementation! </p>
+  <script>
+  document.getElementById('sidebar-button').onclick = function() {
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar.style.display === "" || sidebar.style.display === 'none') {
+      sidebar.style.display = 'block';
+    } else {
+      sidebar.style.display = 'none';
+    }
+  }
+
+  var sidebarButton = document.getElementById('sidebar-button');
+  var closeButton = document.getElementById('close-button');
+  var sidebar = document.getElementById('sidebar');
+
+  sidebarButton.onclick = function() {
+    sidebar.style.display = 'block';
+    sidebarButton.style.display = 'none';
+    closeButton.style.display = 'block';
+  }
+
+  closeButton.onclick = function() {
+    sidebar.style.display = 'none';
+    closeButton.style.display = 'none';
+    sidebarButton.style.display = 'block';
+  }
+</script>
+</body>
+</html>

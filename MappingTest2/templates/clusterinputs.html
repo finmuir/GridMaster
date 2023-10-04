@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>GridMaster</title>
+  <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Didact Gothic', sans-serif;
+      overflow: hidden;
+      position: relative;
+      box-sizing: border-box; /* include padding in box size */
+    }
+    .page-container {
+      padding: 20px;
+      height: 70vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    #background {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://developers.google.com/static/earth-engine/images/datasets/sentinel2_france_1280.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      filter: blur(8px);
+      z-index: -1;
+    }
+
+    .content {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      position: relative;
+    }
+
+    .content-main {
+      background-color: rgba(248, 248, 248, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      width: 50%;
+      display: flex;
+      height: 60vh;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      border: 1px solid white;
+      z-index: 2;
+    }
+
+    .content-small {
+      background-color: rgba(248, 248, 248, 0.8);
+      border-radius: 10px;
+      padding: 20px;
+      width: 20%;
+      display: flex;
+      height: 100px;
+      justify-content: center;
+      align-items: flex-start;
+      flex-direction: column;
+      border: 1px solid white;
+      position: absolute;
+      right: 0vh;
+    }
+
+        #sidebar {
+      position: fixed;
+      padding-top: 70px;
+      right: 0;
+      top: 0;
+      width: 200px;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+      display: none; /* initially hidden */
+          z-index: 3;
+    }
+
+
+    .sidebar a {
+        display: block; /* Make the links appear below each other */
+        color: #f2f2f2; /* Color of links */
+        padding: 15px; /* Padding inside the sidebar */
+        text-decoration: none; /* Remove underline from links */
+    }
+
+    .sidebar a:hover {
+        background-color: #ddd; /* Change color of links on hover */
+        color: black;
+    }
+
+    #sidebar-button, #close-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 30px;
+      background: none;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      outline: none;
+      z-index: 5;
+    }
+
+    h1 {
+      position: absolute;
+      top: -10px;
+      left: 70px;
+      color: #32732c;
+      z-index: 2;
+    }
+
+    h2 {
+      color: #666;
+      top: -8vh;
+        position: relative;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      flex-wrap: wrap;
+      align-items: center;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      margin-right: 30px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 13px;
+      font-weight: bold;
+    }
+
+    .input-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      width: 30%;
+    }
+
+    .input-group input {
+      width: 65%;
+    }
+
+    input[type="number"] {
+      padding: 5px;
+      font-size: 16px;
+      width: 100px;
+    }
+
+    .submit-button{
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 20px;
+      font-family: 'Didact Gothic', sans-serif;
+      text-decoration: none;
+    }
+
+    .submit-button:hover {
+      background-color: #45a049;
+    }
+
+    .input-container label {
+      width: 30%;
+    }
+
+    .input-container input[type="number"] {
+      width: 30%;
+    }
+
+    .welcome-text {
+      margin-top: 7px;
+      text-align: left;
+      font-weight: bold; /
+    }
+
+    .row {
+    display: flex;
+    }
+
+    .column {
+    flex: 1; /* equally divide space among columns */
+    padding: 10px;
+    }
+
+    .input-group {
+    margin-bottom: 10px; /* add some space between input groups */
+    }
+
+    </style>
+</head>
+<body>
+<a href="{{ url_for('welcome') }}">
+  <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
+</a>
+  <button id="sidebar-button">&#9776;</button>
+    <button id="close-button" style="display: none;">&#10006;</button>
+  <div class="page-container">
+    <div id="background"></div>
+    <div id="sidebar" class="sidebar">
+    <a href="https://github.com/finmuir/powergen-py">GitHub</a>
+    <a href="#">About Us</a>
+    <a href="#">Contact</a>
+</div>
+    <div class="content">
+      <div class="content-main">
+        <form action="{{ url_for('plot_data') }}" method="post" enctype="multipart/form-data">
+  <h2>Clustering Parameters</h2>
+    <div class="row">
+        <!-- First column -->
+        <div class="column">
+            <div class="input-group">
+                <label for="network_voltage">Network Voltage:</label>
+                <input type="number" id="network_voltage" name="network_voltage">
+            </div>
+            <div class="input-group">
+                <label for="pole_cost">Pole Cost:</label>
+                <input type="number" id="pole_cost" name="pole_cost">
+            </div>
+            <div class="input-group">
+                <label for="pole_spacing">Pole Spacing:</label>
+                <input type="number" id="pole_spacing" name="pole_spacing">
+            </div>
+        </div>
+
+        <!-- Second column -->
+        <div class="column">
+            <div class="input-group">
+                <label for="resistance_per_km">Resistance Per Kilometre:</label>
+                <input type="number" id="resistance_per_km" name="resistance_per_km">
+            </div>
+            <div class="input-group">
+                <label for="current_rating">Current Rating:</label>
+                <input type="number" id="current_rating" name="current_rating">
+            </div>
+            <div class="input-group">
+                <label for="cost_per_km">Cost Per Kilometre:</label>
+                <input type="number" id="cost_per_km" name="cost_per_km">
+            </div>
+        </div>
+
+        <!-- Third column -->
+        <div class="column">
+            <div class="input-group">
+                <label for="max_voltage_drop">Max Voltage Drop:</label>
+                <input type="number" id="max_voltage_drop" name="max_voltage_drop">
+            </div>
+            <div class="input-group">
+                <label for="max_customers">Max Customers:</label>
+                <input type="number" id="max_customers" name="max_customers">
+            </div>
+            <div class="input-group">
+                <label for="file">Upload File:</label>
+                <input type="file" id="file" name="file">
+            </div>
+        </div>
+    </div>
+
+    <input type="submit" class="submit-button" value="Submit">
+</form>
+      </div>
+      <div class="content-small">
+        <p class="welcome-text">2. GridMaster uses a customer clustering algorithm with many parameters. Please enter your specific values for the following inputs so GridMaster's algorithm can tailor your implementation to your needs.  </p>
+      </div>
+    </div>
+  </div>
+<script>
+  document.getElementById('sidebar-button').onclick = function() {
+    var sidebar = document.getElementById('sidebar');
+    if (sidebar.style.display === "" || sidebar.style.display === 'none') {
+      sidebar.style.display = 'block';
+    } else {
+      sidebar.style.display = 'none';
+    }
+  }
+
+  var sidebarButton = document.getElementById('sidebar-button');
+  var closeButton = document.getElementById('close-button');
+  var sidebar = document.getElementById('sidebar');
+
+  sidebarButton.onclick = function() {
+    sidebar.style.display = 'block';
+    sidebarButton.style.display = 'none';
+    closeButton.style.display = 'block';
+  }
+
+  closeButton.onclick = function() {
+    sidebar.style.display = 'none';
+    closeButton.style.display = 'none';
+    sidebarButton.style.display = 'block';
+  }
+</script>
+</body>
+</html>

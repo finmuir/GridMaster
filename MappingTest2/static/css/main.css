@@ -1,0 +1,33 @@
+/*//
+//
+// GUI Implementation - Testing Mapping Function
+//
+// "Energy For Development" VIP (University of Strathclyde)
+//
+// Code by Finlay Muir and Christopher Gibson
+//
+//
+//*/
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#map {
+    height: 100%;
+}
+
+#heading {
+    font-family: "Sans Serif", sans-serif;
+    color: green;
+    background-color: white;
+    padding: 10px;
+    text-align: center;
+    box-shadow: 0px 1px 5px rgba(0, 0, 0, 0.2);
+}
+
+#heading h1 {
+    margin: 0;
+}
