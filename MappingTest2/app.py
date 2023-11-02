@@ -234,6 +234,8 @@ def plot_data_network():
     cost_per_km = cost_per_km  # £/km
     max_volt_drop = max_voltage_drop  # V
 
+    # create cluster object to extract pole data from
+
     clusterer = cc.CustomerClustering.import_from_csv(
         "csv_uploads/nodes_datapdem.csv",
         network_voltage=network_voltage,
