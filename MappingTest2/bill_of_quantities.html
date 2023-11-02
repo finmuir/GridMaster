@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bill of Quantities</title>
+</head>
+<body>
+    <h1>Bill of Quantities</h1>
+    <table border="1">
+        <tr>
+            <th>Item</th>
+            <th>Value</th>
+        </tr>
+        {% for item, value in bill_of_quantities.items() %}
+        <tr>
+            <td>{{ item }}</td>
+            <td>{{ value }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
+
