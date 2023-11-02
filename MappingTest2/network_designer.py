@@ -14,6 +14,7 @@ import math
 import pandas as pd
 import numpy as np
 import networkx as nx
+import matplotlib.pyplot as plt
 from IPython.display import display
 
 from source_node import Source, Node
@@ -225,11 +226,28 @@ class NetworkDesigner:
     #         plt.savefig("final network", dpi=300)
 
     def draw_graph(self, save=False):
+
+        x = [node.loc[0] for node in self.nodes]
+        y = [node.loc[1] for node in self.nodes]
+
+        # plt.figure(figsize=(10,10))
+        plt.figure()
+        plt.scatter(x[0], y[0], c="orange")  # source
+        plt.scatter(x[1:], y[1:])  # nodes
+        for i in range(len(x)):
+            if i == 0:
+                # plt.annotate("SRC", (x[i], y[i]))
+                plt.text(x[i], y[i], "SRC", fontsize="small")
+            else:
+                # plt.annotate(str(i), (x[i], y[i]))
+                plt.text(x[i], y[i], str(i), fontsize="small")
+        plt.show
+
+        if save == True:
+            plt.savefig("initial layout", dpi=300)
     
         G = nx.Graph()
         pos = dict()
-        for node_idx, node in enumerate(self.nodes):
-            pos[node_idx] = node.loc
 
         # filter valid edges (value not 0 in final connection matrix)
         edges_valid = np.transpose(self.final_connect.nonzero())

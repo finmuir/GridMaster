@@ -236,17 +236,17 @@ def plot_data_network():
 
     # create cluster object to extract pole data from
 
-    clusterer = cc.CustomerClustering.import_from_csv(
-        "csv_uploads/nodes_datapdem.csv",
-        network_voltage=network_voltage,
-        pole_cost=pole_cost,
-        pole_spacing=pole_spacing,
-        resistance_per_km=resistance_per_km,
-        current_rating=current_rating,
-        cost_per_km=cost_per_km,
-        max_voltage_drop=max_voltage_drop
-    )
-    clusterer.cluster(max_customers=max_customers)
+    # clusterer = cc.CustomerClustering.import_from_csv(
+    #     "csv_uploads/nodes_datapdem.csv",
+    #     network_voltage=network_voltage,
+    #     pole_cost=pole_cost,
+    #     pole_spacing=pole_spacing,
+    #     resistance_per_km=resistance_per_km,
+    #     current_rating=current_rating,
+    #     cost_per_km=cost_per_km,
+    #     max_voltage_drop=max_voltage_drop
+    # )
+    # clusterer.cluster(max_customers=max_customers)
 
     net = nd.NetworkDesigner.import_from_csv(
         "csv_uploads/nodes_datapdem.csv",
