@@ -217,6 +217,7 @@ def plot_data_network():
         current_rating = session.get('current_rating', 0)
         cost_per_km = session.get('cost_per_km', 0)
         max_voltage_drop = session.get('max_voltage_drop', 0)
+        max_customers = int(request.form.get('max_customers', 0))
 
     except TypeError:
         flash("One or more of the input values are missing. Please check your inputs.")
@@ -233,14 +234,17 @@ def plot_data_network():
     cost_per_km = cost_per_km  # £/km
     max_volt_drop = max_voltage_drop  # V
 
-    source_coords = session.get('source_coords', (15, 15))
-
-    if source_coords is not None:
-        center_lat = source_coords[0]
-        center_lng = source_coords[1]
-    else:
-        center_lat = 15
-        center_lng = 15
+    clusterer = cc.CustomerClustering.import_from_csv(
+        "csv_uploads/nodes_datapdem.csv",
+        network_voltage=network_voltage,
+        pole_cost=pole_cost,
+        pole_spacing=pole_spacing,
+        resistance_per_km=resistance_per_km,
+        current_rating=current_rating,
+        cost_per_km=cost_per_km,
+        max_voltage_drop=max_voltage_drop
+    )
+    clusterer.cluster(max_customers=max_customers)
 
     net = nd.NetworkDesigner.import_from_csv(
         "csv_uploads/nodes_datapdem.csv",
