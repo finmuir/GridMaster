@@ -11,6 +11,7 @@
 
 import numpy as np
 
+import math
 
 class Customer:
     
@@ -80,9 +81,26 @@ class Cluster:
         # x and y of centroid
         X_c = self.position[0]
         Y_c = self.position[1]
-        
-        # euclidian distance
-        return ((X_c - X)**2 + (Y_c - Y)**2)**(0.5)
+
+        # Radius of the Earth in kilometers
+        rearth = 6371
+
+        # Convert latitude and longitude from degrees to radians
+        lat1 = math.radians(Y_c)
+        lon1 = math.radians(X_c)
+        lat2 = math.radians(Y)
+        lon2 = math.radians(X)
+
+        # Haversine formula calculates distance between two point on sphere
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+        b = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+
+
+        #  distance between centre of cluster and customers
+        return (rearth * b)
     
     def test_distances(self,max_distance):
         """

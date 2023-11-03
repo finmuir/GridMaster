@@ -378,15 +378,32 @@ class CustomerClustering:
                 Y_2 = cluster_2.position[1]
                 
                 # euclidian distance between nodes
-                dist = ((X_2 - X_1)**2 + (Y_2 - Y_1)**2)**(1/2)
-                
-                if self.max_distance != None and dist > self.max_distance:
+                #dist = ((X_2 - X_1)**2 + (Y_2 - Y_1)**2)**(1/2)
+
+                # Radius of the Earth in kilometers
+                Rearth = 6371
+
+                # Convert latitude and longitude from degrees to radians
+                lat1 = math.radians(Y_1)
+                lon1 = math.radians(X_1)
+                lat2 = math.radians(Y_2)
+                lon2 = math.radians(X_2)
+
+                # Haversine formula calculates distance between two point on sphere
+                dlon = lon2 - lon1
+                dlat = lat2 - lat1
+                a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+                b = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+                distance = Rearth* b
+
+                if self.max_distance != None and distance > self.max_distance:
                     
                     print("\ntoo distant",idx_1,idx_2)
                     
                     continue
                 
                 else:
-                    dist_matrix[idx_1,idx_2] = dist
+                    dist_matrix[idx_1,idx_2] = distance
         
         return dist_matrix
