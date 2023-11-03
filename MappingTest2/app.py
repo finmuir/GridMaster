@@ -217,7 +217,7 @@ def plot_data_network():
         current_rating = session.get('current_rating', 0)
         cost_per_km = session.get('cost_per_km', 0)
         max_voltage_drop = session.get('max_voltage_drop', 0)
-        max_customers = int(request.form.get('max_customers', 0))
+        max_customers = session.get('max_customers', 0)
 
     except TypeError:
         flash("One or more of the input values are missing. Please check your inputs.")
@@ -236,20 +236,22 @@ def plot_data_network():
 
     # create cluster object to extract pole data from
 
-    # clusterer = cc.CustomerClustering.import_from_csv(
-    #     "csv_uploads/nodes_datapdem.csv",
-    #     network_voltage=network_voltage,
-    #     pole_cost=pole_cost,
-    #     pole_spacing=pole_spacing,
-    #     resistance_per_km=resistance_per_km,
-    #     current_rating=current_rating,
-    #     cost_per_km=cost_per_km,
-    #     max_voltage_drop=max_voltage_drop
-    # )
-    # clusterer.cluster(max_customers=max_customers)
+    clusterer = cc.CustomerClustering.import_from_csv(
+        "csv_uploads/nodes_datapdem.csv",
+        network_voltage=network_voltage,
+        pole_cost=pole_cost,
+        pole_spacing=pole_spacing,
+        resistance_per_km=resistance_per_km,
+        current_rating=current_rating,
+        cost_per_km=cost_per_km,
+        max_voltage_drop=max_voltage_drop
+    )
+    clusterer.cluster(max_customers=max_customers)
 
     net = nd.NetworkDesigner.import_from_csv(
         "csv_uploads/nodes_datapdem.csv",
+        clusterer.clusters,
+        clusterer.source_coord,
         network_voltage,
         pole_cost,
         pole_spacing,
@@ -259,14 +261,17 @@ def plot_data_network():
         max_V_drop=max_volt_drop
     )
 
-    source_coords = (51.505, -0.09)
     net.build_network()
     edges, pos = net.draw_graph()
     code = ''
-    for node, coords in pos.items():
-        code += f"L.marker([{coords[1]}, {coords[0]}]).addTo(map);\n"
-    for edge in edges:
-        code += f"L.polyline([[{pos[edge[1]][1]}, {pos[edge[1]][0]}], [{pos[edge[0]][1]}, {pos[edge[0]][0]}]], {{color: 'blue'}}).addTo(map);\n"
+    source = True
+    if source:
+        markerIcon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
+        code += f"L.marker([{coords[1]}, {coords[0]}], {{'icon': {markerIcon}, 'color': 'red'}}).addTo(map);\n"
+        source = False
+    else:
+        markerIcon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
+        code += f"L.marker([{coords[1]}, {coords[0]}], {{'icon': {markerIcon}, 'color': 'red'}}).addTo(map);\n"
 
     return render_template('networkdesignresult.html', code=code, source_coords=source_coords)
 
