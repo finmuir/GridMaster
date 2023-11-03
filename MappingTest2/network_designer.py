@@ -245,23 +245,40 @@ class NetworkDesigner:
 
         if save == True:
             plt.savefig("initial layout", dpi=300)
-    
+
+        # plt.figure(figsize=(20,20))
+        plt.figure()
         G = nx.Graph()
-        pos = dict()
 
         # filter valid edges (value not 0 in final connection matrix)
         edges_valid = np.transpose(self.final_connect.nonzero())
         # filter invalid edges
         invalid_connect = self.connections - self.final_connect
         edges_invalid = np.transpose(invalid_connect.nonzero())
+        pos = dict()
+        for node_idx, node in enumerate(self.nodes):
+            pos[node_idx] = node.loc
 
         G.add_edges_from(edges_valid)
         G.add_edges_from(edges_invalid)
-        return G.edges(), pos 
-       
 
+        color_map = []
+        for node_idx in G:
+            node = self.nodes[node_idx]
+            if type(node) == Source:
+                color_map.append("tab:orange")
+            elif node.csrt_sat:
+                color_map.append("tab:blue")
+            else:
+                color_map.append("tab:red")
 
-       
+        nx.draw_networkx_nodes(G, node_color=color_map, pos=pos)
+        nx.draw_networkx_edges(G, pos=pos, edgelist=edges_valid)
+        nx.draw_networkx_labels(G, pos=pos)
+        plt.show()
+
+        if save == True:
+            plt.savefig("final network", dpi=300)
 
     def _setup(self):
         """
