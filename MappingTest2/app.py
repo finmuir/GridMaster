@@ -22,7 +22,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 class Point:
@@ -43,8 +43,8 @@ class Point:
         lat2, lng2 = math.radians(
             self.origin.lat), math.radians(self.origin.lng)
         dlat, dlng = lat2 - lat1, lng2 - lng1
-        a = math.sin(dlat/2)**2 + math.cos(lat1) * \
-            math.cos(lat2) * math.sin(dlng/2)**2
+        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * \
+            math.cos(lat2) * math.sin(dlng / 2) ** 2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         self.distance = R * c * 1000
 
@@ -56,6 +56,7 @@ points = []
 def welcome():
     return render_template('welcome.html')
 
+
 @app.route('/input')
 def input_parameters():
     return render_template('input.html')
@@ -65,6 +66,7 @@ def input_parameters():
 def gensizer():
     return render_template('gensizerinputs.html')
 
+
 @app.route('/store-source-point', methods=['POST'])
 def store_source_point():
     source_lat = float(request.form['source_lat'])
@@ -73,6 +75,7 @@ def store_source_point():
     session['source_coords'] = (source_lat, source_lng)
 
     return redirect(url_for('cluster_inputs'))
+
 
 @app.route('/store-point', methods=['POST'])
 def store_point():
@@ -90,7 +93,8 @@ def store_point():
 
     conn = sqlite3.connect('points.db')
     c = conn.cursor()
-    c.execute('CREATE TABLE IF NOT EXISTS points (lat REAL, lng REAL, label TEXT, origin_lat REAL, origin_lng REAL, distance REAL)')
+    c.execute(
+        'CREATE TABLE IF NOT EXISTS points (lat REAL, lng REAL, label TEXT, origin_lat REAL, origin_lng REAL, distance REAL)')
     if point.origin is None:
         c.execute('INSERT INTO points (lat, lng, label, origin_lat, origin_lng, distance) VALUES (?, ?, ?, ?, ?, ?)',
                   (lat, lng, label, None, None, 0))
@@ -102,13 +106,14 @@ def store_point():
 
     return jsonify({'success': True})
 
+
 @app.route('/clusterinputs', methods=['GET', 'POST'])
 def cluster_inputs():
     return render_template('clusterinputs.html')
 
+
 @app.route('/plot-data', methods=['GET', 'POST'])
 def plot_data():
-
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
@@ -129,9 +134,10 @@ def plot_data():
         session['current_rating'] = current_rating = float(form_data.get('current_rating'))
         session['cost_per_km'] = cost_per_km = float(form_data.get('cost_per_km'))
         session['max_voltage_drop'] = max_voltage_drop = float(form_data.get('max_voltage_drop'))
-        max_customers = int(form_data.get('max_customers'))
+        session['max_customers'] = max_customers = int(form_data.get('max_customers'))
 
-    #test
+
+
 
     except TypeError:
         flash("One or more of the input values are missing. Please check your inputs.")
@@ -205,10 +211,9 @@ def plot_data():
 
     return render_template('clusterresults.html', result=result, source_coords=source_coords)
 
+
 @app.route('/plot-data-network', methods=['GET', 'POST'])
 def plot_data_network():
-    
-  
     try:
         network_voltage = session.get('network_voltage', 0)
         pole_cost = session.get('pole_cost', 0)
@@ -234,22 +239,19 @@ def plot_data_network():
     cost_per_km = cost_per_km  # £/km
     max_volt_drop = max_voltage_drop  # V
 
-    # create cluster object to extract pole data from
-
     clusterer = cc.CustomerClustering.import_from_csv(
         "csv_uploads/nodes_datapdem.csv",
         network_voltage=network_voltage,
         pole_cost=pole_cost,
         pole_spacing=pole_spacing,
-        resistance_per_km=resistance_per_km,
-        current_rating=current_rating,
+        resistance_per_km=res_per_km,
+        current_rating=max_current,
         cost_per_km=cost_per_km,
-        max_voltage_drop=max_voltage_drop
+        max_voltage_drop=max_volt_drop
     )
     clusterer.cluster(max_customers=max_customers)
 
     net = nd.NetworkDesigner.import_from_csv(
-        "csv_uploads/nodes_datapdem.csv",
         clusterer.clusters,
         clusterer.source_coord,
         network_voltage,
@@ -261,19 +263,21 @@ def plot_data_network():
         max_V_drop=max_volt_drop
     )
 
+    # source_coords = (51.505, -0.09)
     net.build_network()
     edges, pos = net.draw_graph()
     code = ''
     source = True
-    if source:
-        markerIcon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
-        code += f"L.marker([{coords[1]}, {coords[0]}], {{'icon': {markerIcon}, 'color': 'red'}}).addTo(map);\n"
-        source = False
-    else:
-        markerIcon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
-        code += f"L.marker([{coords[1]}, {coords[0]}], {{'icon': {markerIcon}, 'color': 'red'}}).addTo(map);\n"
+    for node, coords in pos.items():
+        if source:
+            markerIcon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
+            code += f"L.marker([{coords[1]}, {coords[0]}], {{'icon': {markerIcon}, 'color': 'red'}}).addTo(map);\n"
+            source = False
+        else:
+            markerIcon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
+            code += f"L.marker([{coords[1]}, {coords[0]}], {{'icon': {markerIcon}, 'color': 'red'}}).addTo(map);\n"
 
-    return render_template('networkdesignresult.html', code=code, source_coords=source_coords)
+    return render_template('networkdesignresult.html', code=code, source_coords=clusterer.source_coord)
 
 
 if __name__ == '__main__':

@@ -2,11 +2,11 @@
 """
 
     Customer Clustering
-    
+
     "Energy For Development" VIP (University of Strathclyde)
-    
+
     Code by Alfredo Scalera (alfredo.scalera.2019@uni.strath.ac.uk)
-    
+
 """
 
 import math
@@ -19,8 +19,8 @@ from customer_cluster import Customer, Cluster, InitCluster
 
 
 class CustomerClustering:
-    
-    def __init__(self, init_cluster, network_voltage,
+
+    def __init__(self, init_cluster, source_coord, network_voltage,
                  pole_cost, pole_spacing, resistance_per_km, current_rating,
                  cost_per_km, max_voltage_drop=None, max_distance=None):
         """
@@ -54,34 +54,35 @@ class CustomerClustering:
             The default is None.
 
         """
-        
+
         # network parameters
         self.network_voltage = network_voltage
+        self.source_coord = source_coord
         if max_voltage_drop == None:
             # if none specified, take as 6% of network voltage
             self.max_voltage_drop = 0.06 * network_voltage
         else:
             self.max_voltage_drop = max_voltage_drop
-        
+
         # pole parameters
         self.max_distance = max_distance
         # self.max_connections = max_connections
         self.pole_cost = pole_cost
         self.pole_spacing = pole_spacing
-        
+
         # cable parameters
         self.res_m = resistance_per_km / 1000
         self.current_rating = current_rating
         self.cost_m = cost_per_km / 1000
-        
+
         # initialise clusters array
         self.clusters = [init_cluster]
-        
+
         self.all_clusters_valid = False
-        
+
     @classmethod
-    def import_from_csv(cls, filename, network_voltage, 
-                        pole_cost, pole_spacing, resistance_per_km, 
+    def import_from_csv(cls, filename, network_voltage,
+                        pole_cost, pole_spacing, resistance_per_km,
                         current_rating, cost_per_km, scale_factor=1,
                         max_voltage_drop=None, max_distance=None):
         """
@@ -130,24 +131,29 @@ class CustomerClustering:
 
         # import customers and create initial single cluster
         customers = []
-        for customer_id,data in df.items():
-            position = (scale_factor*data["X"], scale_factor*data["Y"])  # X 0, Y 1
-            power_demand = data[2:]
-            customers.append(Customer(customer_id,position,power_demand))
-        
+        source = True
+        for customer_id, data in df.items():
+            if source:
+                source_coord = (float(data[0]), float(data[1]))
+                source = False
+            else:
+                position = (scale_factor * data["X"], scale_factor * data["Y"])  # X 0, Y 1
+                power_demand = data[2:]
+                customers.append(Customer(customer_id, position, power_demand))
+
         init_cluster = InitCluster(customers)
-        
-        return cls(init_cluster, network_voltage, pole_cost,
+
+        return cls(init_cluster, source_coord, network_voltage, pole_cost,
                    pole_spacing, resistance_per_km, current_rating,
                    cost_per_km, max_voltage_drop=max_voltage_drop,
                    max_distance=max_distance)
-    
+
     @classmethod
     def import_from_OTHER(cls):
         # method that will produce customers (with their respective locations and power demands) from Map
         # PLACEHOLDER
         pass
-    
+
     def cluster(self, max_customers=6):
         """
         Clusters customers together based on proximity and finds
@@ -160,10 +166,10 @@ class CustomerClustering:
         """
 
         while self.all_clusters_valid == False:
-            
+
             # test constraints on all clusters
             self._test_constraints_all(max_customers)  # updates value of all_clusters_valid
-            
+
             # keep valid and apply kmeans (k=2) to invalid clusters
             new_clusters = []
             for cluster in self.clusters:
@@ -172,60 +178,60 @@ class CustomerClustering:
                 elif cluster.valid == False:
                     # apply kmean to invalid cluster and add new ones
                     new_clusters += self._apply_kmeans(cluster)
-            
+
             self.clusters = new_clusters
-        
-        #!!!
+
+        # !!!
         self._merge_loop(max_customers)
-        
+
         self._total_cost()
-    
+
     def _total_cost(self):
         """
         Calculates the total cost of the clustering setup.
 
         """
-        
+
         # array of all distances
         d = np.array([cluster.distances for cluster in self.clusters],
                      dtype=object)
         # concatenating all arrays and summing all elements
         self.total_cable_length = float(np.sum(np.concatenate(d)))
-        
+
         line_cost = self.total_cable_length * self.cost_m
         num_poles = math.ceil(self.total_cable_length / self.pole_spacing)
         num_poles += len(self.clusters)
         poles_cost = num_poles * self.pole_cost
-        
+
         self.total_cost = line_cost + poles_cost
-    
+
     def _test_constraints_all(self, max_customers):
         """
         Tests constraints on all clusters.
 
         """
-        
+
         self.all_clusters_valid = True  # assume all clusters valid initially
-        
+
         for cluster in self.clusters:
-            
+
             cluster.valid = True  # assume cluster valid initially
-            
+
             # test constraints - these methods update cluster.valid
             if self.max_distance != None:  # if max distance specified
                 cluster.test_distances()
-            cluster.test_voltages(self.network_voltage,self.max_voltage_drop,
+            cluster.test_voltages(self.network_voltage, self.max_voltage_drop,
                                   self.res_m)
             # cluster.test_max_connections(self.max_connections)
             cluster.test_max_connections(max_customers)
-            
+
             if cluster.valid == False:
                 self.all_clusters_valid = False
-                
-    def _apply_kmeans(self,cluster):
+
+    def _apply_kmeans(self, cluster):
         """
         Splits cluster into two new clusters by applying kmeans with
-        k = 2 (two clusters). 
+        k = 2 (two clusters).
 
         Parameters
         ----------
@@ -238,72 +244,72 @@ class CustomerClustering:
             List containing two new cluster objects.
 
         """
-        
+
         pos = np.array([customer.position for customer in cluster.customers])
-        
+
         # apply kmeans to invalid clusters (k = 2)
         kmeans = KMeans(n_clusters=2).fit(pos)
-        
+
         cluster_centers = kmeans.cluster_centers_
         cust_labels = kmeans.labels_
         new_clusters = []
-        
+
         for ce_label, center in enumerate(cluster_centers):
             customers = []
             for cu_idx, customer in enumerate(cluster.customers):
                 # if customer label = centroid label
                 if cust_labels[cu_idx] == ce_label:
                     customers.append(customer)
-            
+
             # create new cluster
-            new_clusters.append(Cluster(center,customers))
-            
+            new_clusters.append(Cluster(center, customers))
+
         return new_clusters
-    
-    def _merge_loop(self,max_customers):
+
+    def _merge_loop(self, max_customers):
         """
         Attempts merging clusters together in order to reduce number
         of clusters.
 
         """
-        
+
         print("\nAttempting merge")
-        
+
         self._dist_matrix = self._init_dist_matrix(max_customers)
-        
+
         further_imp = True
         while further_imp:
-            
+
             # find indices of closest pair
             idx_1, idx_2 = np.unravel_index(self._dist_matrix.argmin(),
                                             self._dist_matrix.shape)
-            
+
             cluster_1 = self.clusters[idx_1]
             cluster_2 = self.clusters[idx_2]
             customers = cluster_1.customers + cluster_2.customers
-            
+
             new_cluster = InitCluster(customers)
-            self._test_constraints(new_cluster,max_customers)
-            
+            self._test_constraints(new_cluster, max_customers)
+
             if new_cluster.valid == True:
                 # remove old clusters and add new one
                 self.clusters.remove(cluster_1)
                 self.clusters.remove(cluster_2)
                 self.clustere.append(new_cluster)
-                
+
                 # create new distance matrix
                 self._dist_matrix = self._init_dist_matrix(max_customers)
-            
+
             elif new_cluster.valid == False:
-                self._dist_matrix[idx_1,idx_2] = np.inf
-                self._dist_matrix[idx_2,idx_1] = np.inf
-            
+                self._dist_matrix[idx_1, idx_2] = np.inf
+                self._dist_matrix[idx_2, idx_1] = np.inf
+
             if np.isinf(self._dist_matrix).all():
                 further_imp = False
-            
+
         print("\nFinished merge attempt")
 
-    def _test_constraints(self,cluster,max_customers):
+    def _test_constraints(self, cluster, max_customers):
         """
         Tests maximum distance (if specified), maximum voltage and
         maximum customers constraints on cluster.
@@ -314,19 +320,19 @@ class CustomerClustering:
             Cluster object on which constraints tested.
 
         """
-        
+
         for cluster in self.clusters:
-            
+
             cluster.valid = True  # assume cluster valid initially
-            
+
             # test constraints - these methods update cluster.valid
             if self.max_distance != None:  # if max distance specified
                 cluster.test_distances()
-            cluster.test_voltages(self.network_voltage,self.max_voltage_drop,
+            cluster.test_voltages(self.network_voltage, self.max_voltage_drop,
                                   self.res_m)
             cluster.test_max_connections(max_customers)
-    
-    def _init_dist_matrix(self,max_customers):
+
+    def _init_dist_matrix(self, max_customers):
         """
         Creates distance matrix containing distances between clusters.
         Used for merging process. Pairs to i
@@ -340,53 +346,52 @@ class CustomerClustering:
         # create distance matrix (distances between clusters)
         # used for merging process
         # pairs to ignore marked with inf
-        
-        size = (len(self.clusters),len(self.clusters))
+
+        size = (len(self.clusters), len(self.clusters))
         dist_matrix = np.full(size, np.inf)  # all values initially NaN
         for idx_1, cluster_1 in enumerate(self.clusters):
-            
-            print("\nchecking cluster",idx_1)
-            
+
+            print("\nchecking cluster", idx_1)
+
             # skip cluster if it already has maximum number of customers
             if cluster_1.n_customers == max_customers:
-                
-                print("\nskipped cluster",idx_1)
-                
+                print("\nskipped cluster", idx_1)
+
                 continue
-            
+
             # position of first cluster
             X_1 = cluster_1.position[0]
             Y_1 = cluster_1.position[1]
-            
+
             for idx_2, cluster_2 in enumerate(self.clusters):
-                
+
                 if idx_1 == idx_2:
-                    
-                    print("\nsame clusters:",idx_1,idx_2)
-                    
+
+                    print("\nsame clusters:", idx_1, idx_2)
+
                     continue
-                
+
                 elif ((cluster_1.n_customers + cluster_2.n_customers)
                       > max_customers):
-                    
-                    print("\nmax customers",idx_1,idx_2)
-                    
+
+                    print("\nmax customers", idx_1, idx_2)
+
                     continue
-                
+
                 # position of second cluster
                 X_2 = cluster_2.position[0]
                 Y_2 = cluster_2.position[1]
-                
+
                 # euclidian distance between nodes
-                dist = ((X_2 - X_1)**2 + (Y_2 - Y_1)**2)**(1/2)
-                
+                dist = ((X_2 - X_1) ** 2 + (Y_2 - Y_1) ** 2) ** (1 / 2)
+
                 if self.max_distance != None and dist > self.max_distance:
-                    
-                    print("\ntoo distant",idx_1,idx_2)
-                    
+
+                    print("\ntoo distant", idx_1, idx_2)
+
                     continue
-                
+
                 else:
-                    dist_matrix[idx_1,idx_2] = dist
-        
+                    dist_matrix[idx_1, idx_2] = dist
+
         return dist_matrix

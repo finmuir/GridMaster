@@ -14,7 +14,7 @@ import math
 import pandas as pd
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
+import customer_cluster as cc
 from IPython.display import display
 
 from source_node import Source, Node
@@ -25,7 +25,7 @@ class NetworkDesigner:
     def __init__(self, source_location, nodes_locations, nodes_power_dem,
                  network_voltage, pole_cost, pole_spacing, res_per_km,
                  max_current, cost_per_km, scl=1, max_V_drop=None,
-                 node_ids=None, V_reg=6):
+                 node_ids=None, V_reg=6, customer_nodes=[]):
         """
         Generates network connecting nodes using Esau-Williams CMST.
 
@@ -70,6 +70,8 @@ class NetworkDesigner:
         # create source object
         self.nodes.append(Source(source_location))
 
+        self.customer_nodes = customer_nodes
+
         # create node objects
         for idx, loc in enumerate(nodes_locations):
 
@@ -98,50 +100,36 @@ class NetworkDesigner:
         self.Imax = max_current
         self.cost_meter = cost_per_km / 1000
 
+
     @classmethod
-    def import_from_csv(cls, filename, network_voltage, pole_cost, pole_spacing,
+    def import_from_csv(cls, clusters, source_coord, network_voltage, pole_cost, pole_spacing,
                         res_per_km, max_current, cost_per_km, scl=1,
                         max_V_drop=None, V_reg=6):
-    
+
 
         # read CSV file
-        df = pd.read_csv(str(filename))
-        df = df.set_index("ID")
+        # df = pd.read_csv(str(filename))
+        # df = df.set_index("ID")
 
         # create source and node objects from entries in CSV
         node_locs = []
         power_demands = []
         node_ids = []
+        customer_nodes = []
         source = True
-        print(df.items)
-        for node_id, data in df.items():
+
+        for idx, cluster in enumerate(clusters):
             # first entry is source
-            if source:
-                src_loc = (scl * float(data[0]), scl * float(data[1]))
-                source = False
+            for customer in cluster.customers:
+                customer_nodes.append(customer.position)
+            location = cluster.position
+            node_locs.append(location)
+            node_ids.append(idx)
+            power_demands.append(cluster.Pdem_total)
 
-                # TODO for debug - can remove
-                print(" source location")
-                print(src_loc, "\n")
-
-            # rest are nodes
-            else:
-                location = (scl * float(data[0]), scl * float(data[1]))
-                node_locs.append(location)
-                node_ids.append(node_id)
-                power_demands.append(data[2:].tolist())
-
-                # TODO for debug - can remove
-                print(" node location")
-                print(location)
-                print(" node_id")
-                print(node_id)
-                print(" node Pdem")
-                print(data[2:].tolist(), "\n")
-
-        return cls(src_loc, node_locs, power_demands, network_voltage,
+        return cls(source_coord, node_locs, power_demands, network_voltage,
                    pole_cost, pole_spacing,
-                   res_per_km, max_current, cost_per_km, node_ids)
+                   res_per_km, max_current, cost_per_km, node_ids, customer_nodes=customer_nodes )
 
     # -------HIGH LEVEL METHODS------------------------------------------------#
 
@@ -227,58 +215,21 @@ class NetworkDesigner:
 
     def draw_graph(self, save=False):
 
-        x = [node.loc[0] for node in self.nodes]
-        y = [node.loc[1] for node in self.nodes]
-
-        # plt.figure(figsize=(10,10))
-        plt.figure()
-        plt.scatter(x[0], y[0], c="orange")  # source
-        plt.scatter(x[1:], y[1:])  # nodes
-        for i in range(len(x)):
-            if i == 0:
-                # plt.annotate("SRC", (x[i], y[i]))
-                plt.text(x[i], y[i], "SRC", fontsize="small")
-            else:
-                # plt.annotate(str(i), (x[i], y[i]))
-                plt.text(x[i], y[i], str(i), fontsize="small")
-        plt.show
-
-        if save == True:
-            plt.savefig("initial layout", dpi=300)
-
-        # plt.figure(figsize=(20,20))
-        plt.figure()
         G = nx.Graph()
+        pos = dict()
+        for node_idx, node in enumerate(self.nodes):
+            pos[node_idx] = node.loc
 
         # filter valid edges (value not 0 in final connection matrix)
         edges_valid = np.transpose(self.final_connect.nonzero())
         # filter invalid edges
         invalid_connect = self.connections - self.final_connect
         edges_invalid = np.transpose(invalid_connect.nonzero())
-        pos = dict()
-        for node_idx, node in enumerate(self.nodes):
-            pos[node_idx] = node.loc
 
         G.add_edges_from(edges_valid)
         G.add_edges_from(edges_invalid)
+        return G.edges(), pos
 
-        color_map = []
-        for node_idx in G:
-            node = self.nodes[node_idx]
-            if type(node) == Source:
-                color_map.append("tab:orange")
-            elif node.csrt_sat:
-                color_map.append("tab:blue")
-            else:
-                color_map.append("tab:red")
-
-        nx.draw_networkx_nodes(G, node_color=color_map, pos=pos)
-        nx.draw_networkx_edges(G, pos=pos, edgelist=edges_valid)
-        nx.draw_networkx_labels(G, pos=pos)
-        plt.show()
-
-        if save == True:
-            plt.savefig("final network", dpi=300)
 
     def _setup(self):
         """
@@ -387,7 +338,6 @@ class NetworkDesigner:
         phase for Esau-Williams algorithm.
 
         """
-
         for idx, node in enumerate(self.nodes):
             if type(node) == Source:
                 continue
