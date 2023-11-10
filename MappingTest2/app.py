@@ -135,7 +135,7 @@ def plot_data():
         session['cost_per_km'] = cost_per_km = float(form_data.get('cost_per_km'))
         session['max_voltage_drop'] = max_voltage_drop = float(form_data.get('max_voltage_drop'))
         session['max_customers'] = max_customers = int(form_data.get('max_customers'))
-
+        session['file_name'] = file_name = filename
 
 
 
@@ -148,7 +148,7 @@ def plot_data():
 
     # Run the clustering script with the form data
     clusterer = cc.CustomerClustering.import_from_csv(
-        "csv_uploads/nodes_datapdem.csv",
+        f"csv_uploads/{file_name}",
         network_voltage=network_voltage,
         pole_cost=pole_cost,
         pole_spacing=pole_spacing,
@@ -223,6 +223,7 @@ def plot_data_network():
         cost_per_km = session.get('cost_per_km', 0)
         max_voltage_drop = session.get('max_voltage_drop', 0)
         max_customers = session.get('max_customers', 0)
+        file_name = session.get('file_name', 0)
 
     except TypeError:
         flash("One or more of the input values are missing. Please check your inputs.")
@@ -240,7 +241,7 @@ def plot_data_network():
     max_volt_drop = max_voltage_drop  # V
 
     clusterer = cc.CustomerClustering.import_from_csv(
-        "csv_uploads/nodes_datapdem.csv",
+        f"csv_uploads/{file_name}",
         network_voltage=network_voltage,
         pole_cost=pole_cost,
         pole_spacing=pole_spacing,
