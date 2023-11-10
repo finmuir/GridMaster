@@ -278,6 +278,13 @@ def plot_data_network():
             markerIcon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
             code += f"L.marker([{coords[1]}, {coords[0]}], {{'icon': {markerIcon}, 'color': 'red'}}).addTo(map);\n"
 
+    for edge in edges:
+        code += f"L.polyline([[{pos[edge[1]][1]}, {pos[edge[1]][0]}], [{pos[edge[0]][1]}, {pos[edge[0]][0]}]], {{color: 'red'}}).addTo(map);\n"
+
+    for cus_node in net.customer_nodes:
+        cus_icon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
+        code += f"L.marker([{cus_node[1]}, {cus_node[0]}], {{'icon': {cus_icon}, 'color': 'blue'}}).addTo(map);\n"
+
     return render_template('networkdesignresult.html', code=code, source_coords=clusterer.source_coord)
 
 
