@@ -240,6 +240,15 @@ def plot_data_network():
     cost_per_km = cost_per_km  # £/km
     max_volt_drop = max_voltage_drop  # V
 
+    # source_coords = session.get('source_coords', (15, 15))
+    #
+    # if source_coords is not None:
+    #     center_lat = source_coords[0]
+    #     center_lng = source_coords[1]
+    # else:
+    #     center_lat = 15
+    #     center_lng = 15
+
     clusterer = cc.CustomerClustering.import_from_csv(
         f"csv_uploads/{file_name}",
         network_voltage=network_voltage,
