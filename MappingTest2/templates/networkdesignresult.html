@@ -84,12 +84,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 600px;/* Adjust height */
-      width: 750px; /* Adjust width */
-      position: relative;
+      height: 85%;/* Adjust height */
+      width: 70%; /* Adjust width */
+      position: absolute;
       z-index: 1;
-      top: 15%; /* Move down */
-      left: -23%; /* Move left */
+      top: 12%; /* Move down */
+      left: 13%; /* Move left */
     }
 
     #map {
@@ -182,31 +182,16 @@
             <a href="#">Contact</a>
         </div>
         <div id="map-container">
-            <h2 style="position: absolute; top: -80px; left: 50%; transform: translateX(-50%); z-index: 2; color: #aaa;">Minigrid Implementation:</h2>
+            <h2 style="position: absolute; top: -80px; left: 50%; transform: translateX(-50%); z-index: 2; color: #aaa;">Network Design:</h2>
             <div id="map"></div>
             <div id="chart"></div>
         </div>
     </div>
-
-{#<div id="content-container">#}
-{#    <div class="content-wrapper">#}
-{#        <h2 class="container-title">Implementation Data</h2>#}
-{#        <div class="data-items">#}
-{#            <div class="data-item">Number of clusters: {{ clusters }}</div>#}
-{#            <div class="data-item">Total line cost: {{ total_cost }}</div>#}
-{#        </div>#}
-{#        <form action="{{ url_for('plot_data') }}">#}
-{#            <input type="submit" value="Confirm" class = "submit-button">#}
-{#        </form>#}
-{#    </div>#}
-{#</div>#}
-
     <script>
 
-         var map = L.map('map').setView([{{ source_coords[0] }}, {{ source_coords[1] }}], 5);
-        L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppZW5veTEwM2RuM2Vwa2Z2MGE5amd4In0.xLfkUiN6YS9EVfRNyh5umQ', {
+         var map = L.map('map').setView([{{ source_coords[1] }}, {{ source_coords[0] }}], 17);
+        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppZW5veTEwM2RuM2Vwa2Z2MGE5amd4In0.xLfkUiN6YS9EVfRNyh5umQ', {
             maxZoom: 18,
-            id: 'mapbox/streets-v11',
             tileSize: 512,
             zoomOffset: -1,
             accessToken: 'pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppaGV2amgwMDhzM2RwcGE5eXllanM0In0.JGhdq86XC-ShgG2lokibfw'

@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request, url_for, redirect, f
 import sqlite3
 import math
 import customer_clustering as cc
+import customer_cluster
 import network_designer as nd
 import random
 import plotly.io as pio
@@ -56,16 +57,9 @@ points = []
 def welcome():
     return render_template('welcome.html')
 
-
-@app.route('/input')
-def input_parameters():
-    return render_template('input.html')
-
-
 @app.route('/geninputs')
 def gensizer():
     return render_template('gensizerinputs.html')
-
 
 @app.route('/store-source-point', methods=['POST'])
 def store_source_point():
@@ -111,7 +105,6 @@ def store_point():
 def cluster_inputs():
     return render_template('clusterinputs.html')
 
-
 @app.route('/plot-data', methods=['GET', 'POST'])
 def plot_data():
     if 'file' not in request.files:
@@ -123,7 +116,25 @@ def plot_data():
         return redirect(request.url)
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        # Read the CSV to get the initial coordinates
+        df = pd.read_csv(file_path, index_col=0)
+        try:
+            # Extract the first set of coordinates and correct their order
+            initial_lat = float(df.loc['X', :].values[0]) if 'X' in df.index else None
+            initial_lng = float(df.loc['Y', :].values[0]) if 'Y' in df.index else None
+            # Ensure that the order is longitude first, then latitude
+            source_coords = (initial_lng, initial_lat) if initial_lat is not None and initial_lng is not None else (
+            15, 15)
+        except (ValueError, IndexError):
+            # Handle cases where conversion to float fails or values are not found
+            flash("Error reading coordinates from the file.")
+            return redirect(url_for('cluster_inputs'))
+    else:
+        # Default coordinates if no file is uploaded
+        source_coords = (15, 15)
 
     form_data = request.form
     try:
@@ -135,9 +146,6 @@ def plot_data():
         session['cost_per_km'] = cost_per_km = float(form_data.get('cost_per_km'))
         session['max_voltage_drop'] = max_voltage_drop = float(form_data.get('max_voltage_drop'))
         session['max_customers'] = max_customers = int(form_data.get('max_customers'))
-        session['file_name'] = file_name = filename
-
-
 
     except TypeError:
         flash("One or more of the input values are missing. Please check your inputs.")
@@ -148,7 +156,7 @@ def plot_data():
 
     # Run the clustering script with the form data
     clusterer = cc.CustomerClustering.import_from_csv(
-        f"csv_uploads/{file_name}",
+        file_path,
         network_voltage=network_voltage,
         pole_cost=pole_cost,
         pole_spacing=pole_spacing,
@@ -179,16 +187,6 @@ def plot_data():
     px.set_mapbox_access_token(
         'pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppaGV2amgwMDhzM2RwcGE5eXllanM0In0.JGhdq86XC-ShgG2lokibfw')
 
-    # Get the source coordinates
-    source_coords = session.get('source_coords', (15, 15))
-
-    if source_coords is not None:
-        center_lat = source_coords[0]
-        center_lng = source_coords[1]
-    else:
-        center_lat = 15
-        center_lng = 15
-
     # Create a scatter plot on a Mapbox map
     fig = px.scatter_mapbox(df, lat='y', lon='x', color='Cluster',
                             hover_data=['Type'], zoom=10, height=500)
@@ -206,7 +204,7 @@ def plot_data():
         'fig_json': fig_json,
         'number_of_clusters': len(clusterer.clusters),
         'total_line_cost': clusterer.total_cost,
-        'points': map_data,  # Add the map data to the result
+        'points': map_data,
     }
 
     return render_template('clusterresults.html', result=result, source_coords=source_coords)
@@ -240,15 +238,6 @@ def plot_data_network():
     cost_per_km = cost_per_km  # £/km
     max_volt_drop = max_voltage_drop  # V
 
-    # source_coords = session.get('source_coords', (15, 15))
-    #
-    # if source_coords is not None:
-    #     center_lat = source_coords[0]
-    #     center_lng = source_coords[1]
-    # else:
-    #     center_lat = 15
-    #     center_lng = 15
-
     clusterer = cc.CustomerClustering.import_from_csv(
         f"csv_uploads/{file_name}",
         network_voltage=network_voltage,
@@ -273,26 +262,45 @@ def plot_data_network():
         max_V_drop=max_volt_drop
     )
 
-    # source_coords = (51.505, -0.09)
     net.build_network()
     edges, pos = net.draw_graph()
     code = ''
+
+    customer_icons = ['mapbox-maki-93d5dd4/icons/markerblue.svg', 'mapbox-maki-93d5dd4/icons/markercharcoal.svg', 'mapbox-maki-93d5dd4/icons/markerdarkblue.svg',
+                      'mapbox-maki-93d5dd4/icons/markerdarkgreen.svg', 'mapbox-maki-93d5dd4/icons/markerdarkyellow.svg', 'mapbox-maki-93d5dd4/icons/markergreen.svg',
+                      'mapbox-maki-93d5dd4/icons/markergrey.svg', 'mapbox-maki-93d5dd4/icons/markerlightblue.svg', 'mapbox-maki-93d5dd4/icons/markerlightgreen.svg',
+                      'mapbox-maki-93d5dd4/icons/markerlightpurple.svg', 'mapbox-maki-93d5dd4/icons/markerlightred.svg', 'mapbox-maki-93d5dd4/icons/markerorange.svg',
+                      'mapbox-maki-93d5dd4/icons/markerpink.svg', 'mapbox-maki-93d5dd4/icons/markerpurple.svg', 'mapbox-maki-93d5dd4/icons/markerred.svg', 'mapbox-maki-93d5dd4/icons/markerwhite.svg',
+                      'mapbox-maki-93d5dd4/icons/markeryellow.svg']
+
     source = True
     for node, coords in pos.items():
         if source:
-            markerIcon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-orange.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
-            code += f"L.marker([{coords[1]}, {coords[0]}], {{'icon': {markerIcon}, 'color': 'red'}}).addTo(map);\n"
+            markerIcon = "L.icon({iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/charging-station.svg', iconSize: [25, 41], iconAnchor: [12.5,20.5]})"
+            code += f"L.marker([{coords[1]}, {coords[0]}], {{icon: {markerIcon}}}).addTo(map);\n"
             source = False
         else:
-            markerIcon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
-            code += f"L.marker([{coords[1]}, {coords[0]}], {{'icon': {markerIcon}, 'color': 'red'}}).addTo(map);\n"
+            markerIcon = "L.icon({iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/observation-tower.svg', iconSize: [22, 31], iconAnchor: [12.5, 20.5]})"
+            code += f"L.marker([{coords[1]}, {coords[0]}], {{icon: {markerIcon}}}).addTo(map);\n"
 
     for edge in edges:
-        code += f"L.polyline([[{pos[edge[1]][1]}, {pos[edge[1]][0]}], [{pos[edge[0]][1]}, {pos[edge[0]][0]}]], {{color: 'red'}}).addTo(map);\n"
+        code += f"L.polyline([[{pos[edge[1]][1]}, {pos[edge[1]][0]}], [{pos[edge[0]][1]}, {pos[edge[0]][0]}]], {{color: '#2c353b'}}).addTo(map);\n"
 
-    for cus_node in net.customer_nodes:
-        cus_icon = f"L.icon({{'iconUrl':'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png','shadowUrl':'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png','iconSize':[25, 41],'iconAnchor':[12, 41],'popupAnchor':[1, -34],'shadowSize':[41, 41]}})"
-        code += f"L.marker([{cus_node[1]}, {cus_node[0]}], {{'icon': {cus_icon}, 'color': 'blue'}}).addTo(map);\n"
+    # Iterate over each cluster and use different customer icon
+    for idx, cluster in enumerate(clusterer.clusters):
+        pole_position = cluster.position
+        customer_icon_file = customer_icons[idx % len(customer_icons)]  # Choose icon file
+        for customer in cluster.customers:
+            customer_position = customer.position
+            # Construct the full path for the icon
+            customer_icon = f"static/images/{customer_icon_file}"
+            code += f"L.marker([{customer_position[1]}, {customer_position[0]}], {{icon: L.icon({{iconUrl: '{customer_icon}', iconSize: [20, 27], iconAnchor: [12.5, 20.5]}})}}).addTo(map);\n"
+
+    for cluster in clusterer.clusters:
+        pole_position = cluster.position  # Centroid of the cluster (longitude, latitude)
+        for customer in cluster.customers:
+            customer_position = customer.position  # Customer's position (longitude, latitude)
+            code += f"L.polyline([[{pole_position[1]}, {pole_position[0]}], [{customer_position[1]}, {customer_position[0]}]], {{color: '#4a2900'}}).addTo(map);\n"
 
     return render_template('networkdesignresult.html', code=code, source_coords=clusterer.source_coord)
 
