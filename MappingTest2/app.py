@@ -2,7 +2,6 @@ from flask import Flask, render_template, jsonify, request, url_for, redirect, f
 import sqlite3
 import math
 import customer_clustering as cc
-import customer_cluster
 import network_designer as nd
 import random
 import plotly.io as pio
@@ -10,6 +9,11 @@ import plotly.express as px
 import pandas as pd
 from werkzeug.utils import secure_filename
 import os
+from bill_of_quantities import BillOfQuantities
+import csv
+from flask import Response
+from bill_of_quantities import generate_bill_of_quantities
+import io
 
 app = Flask(__name__)
 
@@ -303,6 +307,44 @@ def plot_data_network():
             code += f"L.polyline([[{pole_position[1]}, {pole_position[0]}], [{customer_position[1]}, {customer_position[0]}]], {{color: '#4a2900'}}).addTo(map);\n"
 
     return render_template('networkdesignresult.html', code=code, source_coords=clusterer.source_coord)
+
+@app.route('/download-boq')
+def download_boq():
+    data = generate_bill_of_quantities()  # Assuming this function returns your bill of quantities data as a dictionary
+    proxy = io.StringIO()
+
+    writer = csv.writer(proxy)
+    writer.writerow(['Item', 'Cost'])  # Writing the header
+    for item, cost in data.items():
+        writer.writerow([item, cost])
+
+    proxy.seek(0)
+    return Response(
+        proxy.getvalue(),
+        mimetype='text/csv',
+        headers={
+            'Content-Disposition': 'attachment; filename=bill_of_quantities.csv',
+            'Content-type': 'text/csv'
+        }
+    )
+@app.route('/billofquantities', methods=['GET', 'POST'])
+def billofquantities():
+    # Parameters for BillOfQuantities - you might want to retrieve these from the session or a form
+    cable_cost_per_km = 1000
+    cable_length_km = 5
+    pole_cost = 500
+    num_customers = 10
+    daily_running_cost = 50
+    installation_cost = 5000
+
+    # Create an instance of the BillOfQuantities with the given parameters
+    boq = BillOfQuantities(cable_cost_per_km, cable_length_km, pole_cost, num_customers, daily_running_cost, installation_cost)
+
+    # Generate the bill of quantities
+    bill_of_quantities = boq.generate_bill_of_quantities()
+
+    # Render the bill_of_quantities.html template, passing in the bill_of_quantities dictionary
+    return render_template('bill_of_quantities.html', bill_of_quantities=bill_of_quantities)
 
 
 if __name__ == '__main__':
