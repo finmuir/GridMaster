@@ -80,22 +80,8 @@ class Cluster:
         X_c = self.position[0]
         Y_c = self.position[1]
 
-        # Radius of the Earth in meters
-        R = 6371000
-
-        # Converts latitude and longitude points  from degrees to radians
-        lat1 = math.radians(Y)
-        lon1 = math.radians(X)
-        lat2 = math.radians(Y_c)
-        lon2 = math.radians(X_c)
-
-        # Haversine formula calculates distance between two point on sphere
-        dlon = lon2 - lon1
-        dlat = lat2 - lat1
-        a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-        return R*c
+        # euclidian distance
+        return ((X_c - X) ** 2 + (Y_c - Y) ** 2) ** (0.5)
 
     def test_distances(self, max_distance):
         """

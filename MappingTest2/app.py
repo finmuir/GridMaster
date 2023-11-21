@@ -346,6 +346,5 @@ def billofquantities():
     # Render the bill_of_quantities.html template, passing in the bill_of_quantities dictionary
     return render_template('bill_of_quantities.html', bill_of_quantities=bill_of_quantities)
 
-
 if __name__ == '__main__':
     app.run(debug=True)
