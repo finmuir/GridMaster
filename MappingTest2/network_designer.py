@@ -104,7 +104,7 @@ class NetworkDesigner:
     @classmethod
     def import_from_csv(cls, clusters, source_coord, network_voltage, pole_cost, pole_spacing,
                         res_per_km, max_current, cost_per_km, scl=1,
-                        max_V_drop=None, V_reg=6):
+                        max_V_drop=None, V_reg=6,):
 
 
         # read CSV file
@@ -148,70 +148,6 @@ class NetworkDesigner:
         self._calc_cost()
 
         self._calc_total_Pdem()
-
-    # def draw_graph(self, save=False):
-    #     """
-    #     Draws network graph.
-    #
-    #     Parameters
-    #     ----------
-    #     save : bool, optional
-    #         If True graph image is saved. The default is False.
-    #
-    #     """
-    #
-    #     x = [node.loc[0] for node in self.nodes]
-    #     y = [node.loc[1] for node in self.nodes]
-    #
-    #     # plt.figure(figsize=(10,10))
-    #     plt.figure()
-    #     plt.scatter(x[0], y[0], c="orange")  # source
-    #     plt.scatter(x[1:], y[1:])  # nodes
-    #     for i in range(len(x)):
-    #         if i == 0:
-    #             # plt.annotate("SRC", (x[i], y[i]))
-    #             plt.text(x[i], y[i], "SRC", fontsize="small")
-    #         else:
-    #             # plt.annotate(str(i), (x[i], y[i]))
-    #             plt.text(x[i], y[i], str(i), fontsize="small")
-    #     plt.show
-    #
-    #     if save == True:
-    #         plt.savefig("initial layout", dpi=300)
-    #
-    #     # plt.figure(figsize=(20,20))
-    #     plt.figure()
-    #     G = nx.Graph()
-    #
-    #     # filter valid edges (value not 0 in final connection matrix)
-    #     edges_valid = np.transpose(self.final_connect.nonzero())
-    #     # filter invalid edges
-    #     invalid_connect = self.connections - self.final_connect
-    #     edges_invalid = np.transpose(invalid_connect.nonzero())
-    #     pos = dict()
-    #     for node_idx, node in enumerate(self.nodes):
-    #         pos[node_idx] = node.loc
-    #
-    #     G.add_edges_from(edges_valid)
-    #     G.add_edges_from(edges_invalid)
-    #
-    #     color_map = []
-    #     for node_idx in G:
-    #         node = self.nodes[node_idx]
-    #         if type(node) == Source:
-    #             color_map.append("tab:orange")
-    #         elif node.csrt_sat:
-    #             color_map.append("tab:blue")
-    #         else:
-    #             color_map.append("tab:red")
-    #
-    #     nx.draw_networkx_nodes(G, node_color=color_map, pos=pos)
-    #     nx.draw_networkx_edges(G, pos=pos, edgelist=edges_valid)
-    #     nx.draw_networkx_labels(G, pos=pos)
-    #     plt.show()
-    #
-    #     if save == True:
-    #         plt.savefig("final network", dpi=300)
 
     def draw_graph(self, save=False):
 

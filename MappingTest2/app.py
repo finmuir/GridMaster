@@ -293,7 +293,7 @@ def plot_data_network():
     # Iterate over each cluster and use different customer icon
     for idx, cluster in enumerate(clusterer.clusters):
         pole_position = cluster.position
-        customer_icon_file = customer_icons[idx % len(customer_icons)]  # Choose icon file
+        customer_icon_file = customer_icons[idx % len(customer_icons)]
         for customer in cluster.customers:
             customer_position = customer.position
             # Construct the full path for the icon
@@ -301,9 +301,9 @@ def plot_data_network():
             code += f"L.marker([{customer_position[1]}, {customer_position[0]}], {{icon: L.icon({{iconUrl: '{customer_icon}', iconSize: [20, 27], iconAnchor: [12.5, 20.5]}})}}).addTo(map);\n"
 
     for cluster in clusterer.clusters:
-        pole_position = cluster.position  # Centroid of the cluster (longitude, latitude)
+        pole_position = cluster.position
         for customer in cluster.customers:
-            customer_position = customer.position  # Customer's position (longitude, latitude)
+            customer_position = customer.position
             code += f"L.polyline([[{pole_position[1]}, {pole_position[0]}], [{customer_position[1]}, {customer_position[0]}]], {{color: '#4a2900'}}).addTo(map);\n"
 
     return render_template('networkdesignresult.html', code=code, source_coords=clusterer.source_coord)

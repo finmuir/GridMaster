@@ -139,11 +139,11 @@
     .start-button {
       background-color: #4CAF50;
       color: white;
-      padding: 15px 30px;
+      padding: 10px 20px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 16px;
+      font-size: 100%;
       margin-top: 30px;
       text-decoration: none;
       display: block;
@@ -152,7 +152,7 @@
     .welcome-text {
       margin-top: 7px;
       text-align: center;
-      font-weight: bold; /* this line boldens the text */
+      font-weight: bold;
     }
 
     .start-button:hover {
@@ -169,13 +169,14 @@
   <div class="page-container">
     <div id="background"></div>
     <div id="sidebar" class="sidebar">
+    <a href="{{ url_for('welcome') }}">Home</a>
     <a href="https://github.com/finmuir/GridMaster">GitHub</a>
     <a href="#">About Us</a>
     <a href="#">Contact</a>
 </div>
     <div class="content">
       <h2>Welcome to GridMaster!</h2>
-      <p class="welcome-text">Welcome to GridMaster! This simple tool will guide you through the process of designing a mini grid. To get started please click the 'Start' button, or to learn about GridMaster's progress navigate to the sidebar for out GitHub. For updates please join the GridMapper mailing list below:   </p>
+      <p class="welcome-text">Welcome to GridMaster! This simple tool will guide you through the process of designing a mini grid. To get started please click the 'Start' button, or to learn about GridMaster's progress navigate to the sidebar for our GitHub. For updates please join the GridMapper mailing list below:   </p>
       <div class="mailing-list">
          <input type="email" id="mailing-list" name="mailing-list" class="mailing-list-input">
           <button class="submit-button">Submit</button>
