@@ -33,8 +33,8 @@ net = nd.NetworkDesigner.import_from_csv(
     max_V_drop=max_volt_drop
 )
 
-# net = nd.NetworkDesigner.import_from_csv("nodes.csv", network_voltage, res_per_km, max_current, cost_per_km,
-#     scl=1, max_V_drop=11.5) 
+net = nd.NetworkDesigner.import_from_csv("nodes_datapdem.csv", network_voltage, res_per_km, max_current, cost_per_km,
+    scl=1, max_V_drop=11.5)
 
 net.build_network()
 net.draw_graph(save=True)

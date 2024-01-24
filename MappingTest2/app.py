@@ -123,6 +123,8 @@ def plot_data():
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
 
+        session['file_name'] = filename
+
         # Read the CSV to get the initial coordinates
         df = pd.read_csv(file_path, index_col=0)
         try:
@@ -225,7 +227,11 @@ def plot_data_network():
         cost_per_km = session.get('cost_per_km', 0)
         max_voltage_drop = session.get('max_voltage_drop', 0)
         max_customers = session.get('max_customers', 0)
-        file_name = session.get('file_name', 0)
+
+        file_name = session.get('file_name', None)
+        if not file_name or file_name == 0:
+            flash("File name is missing. Please upload the file.")
+            return redirect(url_for('cluster_inputs'))
 
     except TypeError:
         flash("One or more of the input values are missing. Please check your inputs.")
