@@ -80,8 +80,23 @@ class Cluster:
         X_c = self.position[0]
         Y_c = self.position[1]
 
-        # euclidian distance
-        return ((X_c - X) ** 2 + (Y_c - Y) ** 2) ** (0.5)
+        # Radius of the Earth in meters
+        R = 6371000
+
+        # Converts latitude and longitude points  from degrees to radians
+        lat1 = np.radians(Y)
+        lon1 = np.radians(X)
+        lat2 = np.radians(Y_c)
+        lon2 = np.radians(X_c)
+
+        # Haversine formula calculates distance between two point on sphere
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+        a = np.sin(dlat / 2) ** 2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2) ** 2
+        c = 2 * np.arctan2(np.sqrt(a), np.sqrt(1 - a))
+        distance = R * c
+
+        return distance
 
     def test_distances(self, max_distance):
         """
