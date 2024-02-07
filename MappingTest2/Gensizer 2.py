@@ -534,7 +534,7 @@ class GenSizer:
 
 
 
-
+        final_plot=True
         # !!! final plotting -- turn into proper method for final version
         if final_plot == True:
             t = [x for x in range(8760)]
@@ -599,8 +599,8 @@ class GenSizer:
 swarm_size = 100
 
 power_demand = [50] * 8760    # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
-print(power_demand)
 psol_unit = PVoutput2.output      # Example: Hourly power provided by a single PV panel (come from pv output)
+print(psol_unit)
 sol_cost = 200             # Example: Cost of a single PV panel(input)
 batt_cost = 100               # Example: Cost of a single battery(input or prereq)
 gen_cost = 200                 # Example: Cost of a single diesel generator()
