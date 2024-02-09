@@ -23,7 +23,7 @@ class PVOutput:
         self.year = year
         self.auto_dataset = auto_dataset
         self.dataset = dataset
-        self.system_loss = system_loss
+        self.pvsystem_loss = pvsystem_loss
         self.auto_tilt = auto_tilt
         self.tilt = tilt
         self.azim = azim
@@ -150,12 +150,12 @@ class PVOutput:
 
 
 # Example usage
-latitude = -14.24580667  # Latitude of Mthembanji source
-longitude = 34.60600833  # Longitude of Mthembanji source
-capacity = 5000  # Capacity of PV panel in Watts
-year = 2022  # Year of data(most up to date year)
-dataset = "merra2"  # Solar resources dataset (optional)
+#latitude = -14.24580667  # Latitude of Mthembanji source
+#longitude = 34.60600833  # Longitude of Mthembanji source
+#panel_capacity = 5000  # Capacity of PV panel in Watts
+#year = 2022  # Year of data(most up to date year)
+#dataset = "merra2"  # Solar resources dataset (optional)
 
-pv_subsystem = PVOutput(latitude, longitude, capacity, year=year, dataset=dataset)
-output = pv_subsystem.pv_output()
+#pv_subsystem = PVOutput(latitude, longitude, capacity, year=year, dataset=dataset)
+#output = pv_subsystem.pv_output()
 

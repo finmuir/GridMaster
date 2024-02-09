@@ -20,7 +20,8 @@ import random
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-from MappingTest2 import PVoutput2
+import os
+
 
 
 class Particle:
@@ -536,57 +537,107 @@ class GenSizer:
 
         final_plot=True
         # !!! final plotting -- turn into proper method for final version
-        if final_plot == True:
-            t = [x for x in range(8760)]
-            xmax = 72
+        #if final_plot == True:
+         #   t = [x for x in range(8760)]
+          #  xmax = 72
 
             # power demand against time
-            plt.figure()
-            plt.plot(t, self.Pdem)
-            plt.xlabel("Time (h)")
-            plt.ylabel("Power Demand (W)")
-            plt.xlim(0, xmax)  # only show first 24hrs
+           # plt.figure()
+            #plt.plot(t, self.Pdem)
+            #plt.xlabel("Time (h)")
+            #plt.ylabel("Power Demand (W)")
+            #plt.xlim(0, xmax)  # only show first 24hrs
             # plt.ylim(0,1500)
             # plt.yticks([x for x in range(0,1500,250)])
-            plt.ylim(0, max(self.Pdem) * (1.25))
-            plt.yticks(np.linspace(0, max(self.Pdem) * 1.25, num=6))
-            plt.title("Power Demand vs Time (Initial 72 hours)")
-            plt.show()
+           # plt.ylim(0, max(self.Pdem) * (1.25))
+            #plt.yticks(np.linspace(0, max(self.Pdem) * 1.25, num=6))
+            #plt.title("Power Demand vs Time (Initial 72 hours)")
+            #p#lt.show()
 
             # solar power against time
-            plt.figure()
-            plt.plot(t, self.swarm[0].Psol)
-            plt.xlabel("Time (h)")
-            plt.ylabel("Power (W)")
-            plt.xlim(0, xmax)  # only show first 24hrs
-            plt.title("Solar Power vs Time (Initial 72 hours)")
-            plt.show()
+            #plt.figure()
+            #plt.plot(t, self.swarm[0].Psol)
+            #plt.xlabel("Time (h)")
+            #plt.ylabel("Power (W)")
+            #plt.xlim(0, xmax)  # only show first 24hrs
+            #plt.title("Solar Power vs Time (Initial 72 hours)")
+            #plt.show()
 
             # energy batteries against time
-            plt.figure()
-            plt.plot(t, self.swarm[0].Ebatt[0:8760], label="Energy stored")
-            plt.plot(t, [self.swarm[0].pos[1] * self.EbattMax_unit] * 8760,
-                     label="Max. capacity")  # line showing max capacity
-            plt.plot(t, [self.swarm[0].pos[1] * self.EbattMin_unit] * 8760,
-                     label="Min. capacity")  # line showing min capacity
-            plt.xlabel("Time (h)")
-            plt.ylabel("Energy (Wh)")
-            plt.xlim(0, xmax)  # only show first 24hrs
-            plt.yticks(np.linspace(0, self.swarm[0].pos[1] * self.EbattMax_unit,
-                                   num=7))
-            plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.075),
-                       shadow=True, ncol=3)
-            plt.title("Stored Energy in Batteries vs Time (Initial 72 hours)")
-            plt.show()
+            #plt.figure()
+            #plt.plot(t, self.swarm[0].Ebatt[0:8760], label="Energy stored")
+            #plt.plot(t, [self.swarm[0].pos[1] * self.EbattMax_unit] * 8760,
+             #        label="Max. capacity")  # line showing max capacity
+            #plt.plot(t, [self.swarm[0].pos[1] * self.EbattMin_unit] * 8760,
+                  #   label="Min. capacity")  # line showing min capacity
+            #plt.xlabel("Time (h)")
+            #plt.ylabel("Energy (Wh)")
+            #plt.xlim(0, xmax)  # only show first 24hrs
+            #plt.yticks(np.linspace(0, self.swarm[0].pos[1] * self.EbattMax_unit,
+                        #           num=7))
+            #plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.075),
+                     #  shadow=True, ncol=3)
+            #plt.title("Stored Energy in Batteries vs Time (Initial 72 hours)")
+            #plt.show()
 
             # power generators against time
-            plt.figure()
-            plt.plot(t, self.swarm[0].Pgen)
-            plt.xlabel("Time (h)")
-            plt.ylabel("Power (W)")
-            plt.xlim(0, xmax)  # only show first 24hrs
-            plt.title("Generated Power vs Time (Initial 72 hours)")
-            plt.show()
+           # plt.figure()
+          #  plt.plot(t, self.swarm[0].Pgen)
+            #plt.xlabel("Time (h)")
+           # plt.ylabel("Power (W)")
+            #plt.xlim(0, xmax)  # only show first 24hrs
+            #plt.title("Generated Power vs Time (Initial 72 hours)")
+           # plt.show()
+
+    def plot_graphs(self):
+        """
+                 Generate and save plots for power demand, solar power, battery energy,
+                 and generator power.
+                 """
+
+        # Create a directory to store the plots if it doesn't exist
+        if not os.path.exists('static/plots'):
+            os.makedirs('static/plots')
+
+        # Hourly time vector
+        t = [x for x in range(8760)]
+
+        # Plot power demand
+        plt.figure()
+        plt.plot(t, self.Pdem)
+        plt.xlabel("Time (h)")
+        plt.ylabel("Power Demand (W)")
+        plt.title("Power Demand vs Time")
+        plt.savefig('static/plots/power_demand.png')
+        plt.close()
+
+        # Plot solar power
+        plt.figure()
+        plt.plot(t, self.swarm[0].Psol)
+        plt.xlabel("Time (h)")
+        plt.ylabel("Solar Power (W)")
+        plt.title("Solar Power vs Time")
+        plt.savefig('static/plots/solar_power.png')
+        plt.close()
+
+        # Plot battery energy
+        plt.figure()
+        plt.plot(t, self.swarm[0].Ebatt[0:8760], label="Energy stored")
+        plt.xlabel("Time (h)")
+        plt.ylabel("Battery Energy (Wh)")
+        plt.title("Battery Energy vs Time")
+        plt.savefig('static/plots/battery_energy.png')
+        plt.close()
+
+        # Plot generator power
+        plt.figure()
+        plt.plot(t, self.swarm[0].Pgen)
+        plt.xlabel("Time (h)")
+        plt.ylabel("Generator Power (W)")
+        plt.title("Generator Power vs Time")
+        plt.savefig('static/plots/generator_power.png')
+        plt.close()
+
 
 
 
@@ -596,30 +647,30 @@ class GenSizer:
 
 
 # Placeholder values, replace with actual data need research to find real values and take values from network dessigner
-swarm_size = 100
+#swarm_size = 100
 
-power_demand = [50] * 8760    # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
-psol_unit = PVoutput2.output      # Example: Hourly power provided by a single PV panel (come from pv output)
-print(psol_unit)
-sol_cost = 200             # Example: Cost of a single PV panel(input)
-batt_cost = 100               # Example: Cost of a single battery(input or prereq)
-gen_cost = 200                 # Example: Cost of a single diesel generator()
-fuel_cost = 1.5                # Example: Cost of fuel per liter (can change so probably input eg if fuel is hard to import or bought in bulk)
-batt_Wh_max_unit = 10000       # Example: Battery maximum Wh capacity(input depeneds on battery)
-batt_Wh_min_unit = 1000        # Example: Battery minimum Wh capacity(input depends on battery)
-gen_max_power_out = 5000       # Example: Maximum power output of a generator()
-gen_fuel_req = 10              # Example: Fuel requirement per hour of generation(depends on generator input)
-max_off_hours = 24             # Example: Maximum hours the grid can be offline(limit set by user)
-min_autonomy_days = 3          # Example: Minimum number of autonomy days required()
+#power_demand = [50] * 8760    # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
+#psol_unit = PVoutput2.output      # Example: Hourly power provided by a single PV panel (come from pv output)
+#print(psol_unit)
+#sol_cost = 200             # Example: Cost of a single PV panel(input)
+#batt_cost = 100               # Example: Cost of a single battery(input or prereq)
+#gen_cost = 200                 # Example: Cost of a single diesel generator()
+#fuel_cost = 1.5                # Example: Cost of fuel per liter (can change so probably input eg if fuel is hard to import or bought in bulk)
+#batt_Wh_max_unit = 10000       # Example: Battery maximum Wh capacity(input depeneds on battery)
+#batt_Wh_min_unit = 1000        # Example: Battery minimum Wh capacity(input depends on battery)
+#gen_max_power_out = 5000       # Example: Maximum power output of a generator()
+#gen_fuel_req = 10              # Example: Fuel requirement per hour of generation(depends on generator input)
+#max_off_hours = 24             # Example: Maximum hours the grid can be offline(limit set by user)
+#min_autonomy_days = 3          # Example: Minimum number of autonomy days required()
 
 # Instantiate GenSizer with all required parameters
-gen_sizer = GenSizer(swarm_size, power_demand, psol_unit,
-                     sol_cost, batt_cost, gen_cost, fuel_cost,
-                     batt_Wh_max_unit, batt_Wh_min_unit,
-                     gen_max_power_out, gen_fuel_req,
-                     max_off_hours, min_autonomy_days)
+#gen_sizer = GenSizer(swarm_size, power_demand, psol_unit,
+  #                   sol_cost, batt_cost, gen_cost, fuel_cost,
+   #                  batt_Wh_max_unit, batt_Wh_min_unit,
+    #                 gen_max_power_out, gen_fuel_req,
+     #                max_off_hours, min_autonomy_days)
 
 # Perform optimization
-max_iter = 100  # Example: Maximum number of iterations
-gen_sizer.optimise(max_iter)
+#max_iter = 100  # Example: Maximum number of iterations
+#gen_sizer.optimise(max_iter)
 

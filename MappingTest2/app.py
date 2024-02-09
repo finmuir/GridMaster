@@ -14,6 +14,8 @@ import csv
 from flask import Response
 from bill_of_quantities import generate_bill_of_quantities
 import io
+from PVoutput2 import PVOutput
+from Gensizer2 import GenSizer
 
 app = Flask(__name__)
 
@@ -60,10 +62,6 @@ points = []
 @app.route('/')
 def welcome():
     return render_template('welcome.html')
-
-@app.route('/geninputs')
-def gensizer():
-    return render_template('gensizerinputs.html')
 
 @app.route('/store-source-point', methods=['POST'])
 def store_source_point():
@@ -313,6 +311,76 @@ def plot_data_network():
             code += f"L.polyline([[{pole_position[1]}, {pole_position[0]}], [{customer_position[1]}, {customer_position[0]}]], {{color: '#4a2900'}}).addTo(map);\n"
 
     return render_template('networkdesignresult.html', code=code, source_coords=clusterer.source_coord)
+
+
+@app.route('/geninputs')
+def gensizerinputs():
+    return render_template('gensizerinputs.html')
+
+@app.route('/genoutputs', methods=['Get', 'Post'])
+def gensizer():
+    form_data = request.form
+    try:
+        session['swarm_size'] = swarm_size = float(form_data.get('swarm_size'))
+        session['panel_capacity'] = panel_capacity = float(form_data.get('panel_capacity'))
+        session['sol_cost'] =sol_cost= float(form_data.get('sol_cost'))
+        session['batt_cost'] =batt_cost= float(form_data.get('batt_cost'))
+        session['gen_cost'] =gen_cost= float(form_data.get('gen_cost'))
+        session['fuel_cost'] =fuel_cost= float(form_data.get('fuel_cost'))
+        session['batt_Wh_max_unit'] =batt_Wh_max_unit= float(form_data.get('batt_Wh_max_unit'))
+        session['batt_Wh_min_unit'] =batt_Wh_min_unit= float(form_data.get('batt_Wh_min_unit'))
+        session['gen_max_power_out'] =gen_max_power_out= float(form_data.get('gen_max_power_out'))
+        session['gen_fuel_req'] =gen_fuel_req= float(form_data.get('gen_fuel_req'))
+        session['min_autonomy_days'] =min_autonomy_days= float(form_data.get('min_autonomy_days'))
+        session['max_off_hours'] =max_off_hours= float(form_data.get('max_off_hours'))
+        session['pvsystem_loss'] =pvsystem_loss= float(form_data.get('pvsystem_loss'))
+        session['power_demand'] =power_demand= float(form_data.get('power_demand'))
+        source_coords = session.get('source_coords', (0, 0))
+        max_iter = 100
+        latitude, longitude = source_coords
+        year = 2023
+
+
+    except TypeError:
+        flash("One or more of the input values are missing. Please check your inputs.")
+        return redirect(url_for('gensizerinputs'))
+    except ValueError:
+        flash("One or more of the input values are invalid. Please check your inputs.")
+        return redirect(url_for('gensizerinputs'))
+
+        # Instantiate PVOutput object
+        pv_system = PVOutput(lat, long, capacity, year=year)
+        # Get PV output
+        psol_unit = pv_system.pv_output()
+
+        # Instantiate GenSizer with input variables
+        gen_sizer = GenSizer(swarm_size, power_demand, psol_unit,
+                             sol_cost, batt_cost, gen_cost, fuel_cost,
+                             batt_Wh_max_unit, batt_Wh_min_unit,
+                             gen_max_power_out, gen_fuel_req,
+                             max_off_hours, min_autonomy_days)
+        gen_sizer.optimise(max_iter)
+        gen_sizer.plot_graphs()
+
+        solar_panels = gen_sizer.swarm[0].pos[0]
+        batteries = gen_sizer.swarm[0].pos[1]
+        generators = gen_sizer.swarm[0].pos[2]
+        fuel_used = gen_sizer.swarm[0].fuel_used
+        total_cost = gen_sizer.total_cost
+        autonomy_days = gen_sizer.swarm[0].autonomDays
+
+    return render_template('gensizer.html',
+                           solar_panels=solar_panels,
+                           batteries=batteries,
+                           generators=generators,
+                           fuel_used=fuel_used,
+                           total_cost=total_cost,
+                           autonomy_days=autonomy_days,
+                           power_demand_plot='static/plots/power_demand.png',
+                           solar_power_plot='static/plots/solar_power.png',
+                           battery_energy_plot='static/plots/battery_energy.png',
+                           generator_power_plot='static/plots/generator_power.png')
+
 
 @app.route('/download-boq')
 def download_boq():

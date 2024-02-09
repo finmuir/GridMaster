@@ -208,83 +208,58 @@
       font-weight: bold; /
     }
 
-    </style>
+     </style>
 </head>
 <body>
 <a href="{{ url_for('welcome') }}">
-  <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
+    <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
 </a>
-  <div id="background"></div>
-  <div class="page-container">
-      <button id="sidebar-button">&#9776;</button>
+<div id="background"></div>
+<div class="page-container">
+    <button id="sidebar-button">&#9776;</button>
     <button id="close-button" style="display: none;">&#10006;</button>
     <div id="sidebar" class="sidebar">
-    <a href="https://github.com/finmuir/powergen-py">GitHub</a>
-    <a href="#">About Us</a>
-    <a href="#">Contact</a>
-</div>
-    <div class="content">
-      <div class="content-main">
-        <h2>Generation Sizer Parameters</h2>
-        <form action="/submit" method="post">
-          <div class="row">
-            <div class="column">
-              <div class="input-group">
-                <label for="input1">Number of Particles:</label>
-                <input type="text" id="input1" name="input1">
-              </div>
-              <div class="input-group">
-                <label for="input2">PV Panel Capacity:</label>
-                <input type="text" id="input2" name="input2">
-              </div>
-              <div class="input-group">
-                <label for="input3">PV Panel Cost</label>
-                <input type="text" id="input3" name="input3">
-              </div>
-              <div class="input-group">
-                <label for="input4">Battery Cost:</label>
-                <input type="text" id="input4" name="input4">
-              </div>
-            </div>
-            <div class="column">
-              <div class="input-group">
-                <label for="input5">Diesel Generator Cost:</label>
-                <input type="text" id="input5" name="input5">
-              </div>
-              <div class="input-group">
-                <label for="input6">Fuel Cost:</label>
-                <input type="text" id="input6" name="input6">
-              </div>
-              <div class="input-group">
-                <label for="input7">Max Battery Energy:</label>
-                <input type="text" id="input7" name="input7">
-              </div>
-              <div class="input-group">
-                <label for="input8">Min Battery Energy:</label>
-                <input type="text" id="input8" name="input8">
-              </div>
-            </div>
-            <div class="column">
-              <div class="input-group">
-                <label for="input9">Diesel Generator Rated Power:</label>
-                <input type="input9" id="input9" name="input9">
-              </div>
-              <div class="input-group">
-                <label for="input10">Fuel Requirement (Litres per Hour):</label>
-                <input type="text" id="input10" name="input10">
-              </div>
-              <div class="input-group">
-                <label for="input11">Required Days of Autonomy:</label>
-                <input type="text" id="input11" name="input11">
-              </div>
-          </div>
-          </div>
-          <a href="/map" class="submit-button">Submit</a>
-        </form>
-      </div>
-      </div>
+        <a href="https://github.com/finmuir/powergen-py">GitHub</a>
+        <a href="#">About Us</a>
+        <a href="#">Contact</a>
     </div>
-  </div>
+    <div class="content">
+        <div class="content-main">
+            <h2>Optimization Results</h2>
+            <!-- Display the optimization results -->
+            <div class="optimization-results">
+                <p>Number of Solar Panels: {{ solar_panels }}</p>
+                <p>Number of Batteries: {{ batteries }}</p>
+                <p>Number of Generators: {{ generators }}</p>
+                <p>Fuel Used: {{ fuel_used }}</p>
+                <p>Total Cost: {{ total_cost }}</p>
+                <p>Autonomy Days: {{ autonomy_days }}</p>
+            </div>
+            <!-- Display the graphs -->
+            <div class="graphs">
+                <div class="graph-container">
+                    <!-- Graph 1 Placeholder -->
+                    <canvas id="graph1"></canvas>
+                </div>
+                <div class="graph-container">
+                    <!-- Graph 2 Placeholder -->
+                    <canvas id="graph2"></canvas>
+                </div>
+                <div class="graph-container">
+                    <!-- Graph 3 Placeholder -->
+                    <canvas id="graph3"></canvas>
+                </div>
+                <div class="graph-container">
+                    <!-- Graph 4 Placeholder -->
+                    <canvas id="graph4"></canvas>
+                </div>
+            </div>
+           </div>
+            <a href="{{ url_for('billofquantities') }}" class="submit-button">Bill of Quantities</a>
+        </div>
+        </div>
+    </div>
+</div>
 <div class = "content-small">
 <p class="welcome-text">3. GridMaster next needs to know some information about the equipment you're using. This will help the algorithm to provide additional data that will help with your implementation! </p>
   <script>

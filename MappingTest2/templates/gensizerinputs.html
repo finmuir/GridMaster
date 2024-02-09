@@ -144,11 +144,20 @@
     }
 
     .column {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-around;
-      margin-right: 30px;
-    }
+  flex: 1; /* Use flex-grow to distribute space evenly among columns */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  margin-right: 10px; /* Adjust margin for spacing between columns */
+}
+
+@media (max-width: 768px) {
+  .column {
+    flex-basis: 100%; /* Change column layout to single column on smaller screens */
+    margin-right: 0; /* Remove margin for single column layout */
+  }
+}
+
 
     label {
       display: block;
@@ -164,7 +173,7 @@
     }
 
     .input-group label {
-      width: 30%;
+      width: 50%;
     }
 
     .input-group input {
@@ -226,60 +235,74 @@
     <div class="content">
       <div class="content-main">
         <h2>Generation Sizer Parameters</h2>
-        <form action="/submit" method="post">
+        <form action="/genoutputs" method="post">
           <div class="row">
             <div class="column">
               <div class="input-group">
-                <label for="input1">Number of Particles:</label>
-                <input type="text" id="input1" name="input1">
+                <label for="swarm_size">Number of Particles in swarm:</label>
+                <input type="number" id="swarm_size" name="swarm_size">
               </div>
               <div class="input-group">
-                <label for="input2">PV Panel Capacity:</label>
-                <input type="text" id="input2" name="input2">
+                <label for="panel_capacity">PV Panel Capacity:</label>
+                <input type="number" id="panel_capacity" name="panel_capacity">
               </div>
               <div class="input-group">
-                <label for="input3">PV Panel Cost</label>
-                <input type="text" id="input3" name="input3">
+                <label for="sol_cost">PV Panel Cost</label>
+                <input type="number" id="sol_cost" name="sol_cost">
               </div>
               <div class="input-group">
-                <label for="input4">Battery Cost:</label>
-                <input type="text" id="input4" name="input4">
+                <label for="batt_cost">Battery Cost:</label>
+                <input type="number" id="batt_cost" name="batt_cost">
+              </div>
+              <div class="input-group">
+                <label for="gen_cost">Diesel Generator Cost:</label>
+                <input type="number" id="gen_cost" name="gen_cost">
               </div>
             </div>
             <div class="column">
+
               <div class="input-group">
-                <label for="input5">Diesel Generator Cost:</label>
-                <input type="text" id="input5" name="input5">
+                <label for="fuel_cost">Fuel Cost:</label>
+                <input type="number" id="fuel_cost" name="fuel_cost">
               </div>
               <div class="input-group">
-                <label for="input6">Fuel Cost:</label>
-                <input type="text" id="input6" name="input6">
+                <label for="batt_Wh_max_unit">Max Battery Energy:</label>
+                <input type="number" id="batt_Wh_max_unit" name="batt_Wh_max_unit">
               </div>
               <div class="input-group">
-                <label for="input7">Max Battery Energy:</label>
-                <input type="text" id="input7" name="input7">
+                <label for="batt_Wh_min_unit">Min Battery Energy:</label>
+                <input type="number" id="batt_Wh_min_unit" name="batt_Wh_min_unit">
               </div>
               <div class="input-group">
-                <label for="input8">Min Battery Energy:</label>
-                <input type="text" id="input8" name="input8">
+                <label for="gen_max_power_out">Diesel Generator Rated Power:</label>
+                <input type="number" id="gen_max_power_out" name="gen_max_power_out">
               </div>
             </div>
             <div class="column">
+
               <div class="input-group">
-                <label for="input9">Diesel Generator Rated Power:</label>
-                <input type="input9" id="input9" name="input9">
+                <label for="gen_fuel_req">Fuel Requirement (Litres per Hour):</label>
+                <input type="number" id="gen_fuel_req" name="gen_fuel_req">
               </div>
               <div class="input-group">
-                <label for="input10">Fuel Requirement (Litres per Hour):</label>
-                <input type="text" id="input10" name="input10">
+                <label for="min_autonomy_days">Required Days of Autonomy:</label>
+                <input type="number" id="min_autonomy_days" name="min_autonomy_days">
               </div>
               <div class="input-group">
-                <label for="input11">Required Days of Autonomy:</label>
-                <input type="text" id="input11" name="input11">
+                <label for="max_off_hours">Maximum offline hours:</label>
+                <input type="number" id="max_off_hours" name="max_off_hours">
+              </div>
+              <div class="input-group">
+                <label for="pvsystem_loss">PV system Loss:</label>
+                <input type="number" id="pvsystem_loss" name="pvsystem_loss">
+              </div>
+              <div class="input-group">
+                <label for="power_demand ">hourly power demand:</label>
+                <input type="number" id="power_demand " name="power_demand ">
               </div>
           </div>
           </div>
-          <a href="/map" class="submit-button">Submit</a>
+          <a href="/genoutputs" class="submit-button">Submit</a>
         </form>
       </div>
       </div>
