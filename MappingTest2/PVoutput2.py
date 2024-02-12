@@ -15,7 +15,7 @@ import json
 import pandas as pd
 
 class PVOutput:
-    def __init__(self, lat, long, capacity, year=2019, auto_dataset=True, dataset="merra2", system_loss=0,
+    def __init__(self, lat, long, capacity, year=2019, auto_dataset=True, dataset="merra2", pvsystem_loss=0,
                  auto_tilt=True, tilt=40, azim=180):
         self.lat = lat
         self.long = long
@@ -90,7 +90,7 @@ class PVOutput:
             'date_to': end_date,
             'dataset': self.dataset,
             'capacity': self.capacity / 1000,  # from W to kW
-            'system_loss': self.system_loss,
+            'system_loss': self.pvsystem_loss,
             'tracking': 0,
             'tilt': self.tilt,
             'azim': self.azim,
@@ -149,13 +149,4 @@ class PVOutput:
             return "merra2"
 
 
-# Example usage
-#latitude = -14.24580667  # Latitude of Mthembanji source
-#longitude = 34.60600833  # Longitude of Mthembanji source
-#panel_capacity = 5000  # Capacity of PV panel in Watts
-#year = 2022  # Year of data(most up to date year)
-#dataset = "merra2"  # Solar resources dataset (optional)
-
-#pv_subsystem = PVOutput(latitude, longitude, capacity, year=year, dataset=dataset)
-#output = pv_subsystem.pv_output()
 
