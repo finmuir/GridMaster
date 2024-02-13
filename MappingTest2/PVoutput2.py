@@ -15,7 +15,7 @@ import json
 import pandas as pd
 
 class PVOutput:
-    def __init__(self, lat, long, capacity, year=2019, auto_dataset=True, dataset="merra2", pvsystem_loss=0,
+    def __init__(self, lat, long, capacity, year, auto_dataset=True,dataset='merra2', pvsystem_loss=0,
                  auto_tilt=True, tilt=40, azim=180):
         self.lat = lat
         self.long = long
@@ -68,11 +68,11 @@ class PVOutput:
              """
         if self.auto_dataset:
             self.dataset = self.automatic_dataset()
-            print("Dataset: " + self.dataset)
+            #print("Dataset: " + self.dataset)
 
         if self.auto_tilt:
             self.tilt = self.automatic_tilt()
-            print("Tilt: " + str(self.tilt))
+            #print("Tilt: " + str(self.tilt))
 
         start_date = str(self.year) + "-01-01"
         end_date = str(self.year) + "-12-31"
@@ -103,8 +103,9 @@ class PVOutput:
         r = s.get(url, params=args)
         parsed_response = json.loads(r.text)
         data = pd.read_json(json.dumps(parsed_response), orient='index')
+        output=(p_out * 1000 for p_out in data["electricity"].values.tolist())
 
-        return [p_out * 1000 for p_out in data["electricity"].values.tolist()]
+        return output
 
     def automatic_tilt(self):
         """

@@ -317,69 +317,58 @@ def plot_data_network():
 def gensizerinputs():
     return render_template('gensizerinputs.html')
 
-@app.route('/genoutputs', methods=['Get', 'Post'])
+
+@app.route('/genoutputs', methods=['POST'])
 def gensizer():
-    form_data = request.form
-    try:
-        session['swarm_size'] = swarm_size = float(form_data.get('swarm_size'))
-        session['panel_capacity'] = panel_capacity = float(form_data.get('panel_capacity'))
-        session['sol_cost'] = sol_cost = float(form_data.get('sol_cost'))
-        session['batt_cost'] = batt_cost = float(form_data.get('batt_cost'))
-        session['gen_cost'] = gen_cost = float(form_data.get('gen_cost'))
-        session['fuel_cost'] = fuel_cost = float(form_data.get('fuel_cost'))
-        session['batt_Wh_max_unit'] = batt_Wh_max_unit = float(form_data.get('batt_Wh_max_unit'))
-        session['batt_Wh_min_unit'] = batt_Wh_min_unit = float(form_data.get('batt_Wh_min_unit'))
-        session['gen_max_power_out'] = gen_max_power_out = float(form_data.get('gen_max_power_out'))
-        session['gen_fuel_req'] = gen_fuel_req = float(form_data.get('gen_fuel_req'))
-        session['min_autonomy_days'] = min_autonomy_days = float(form_data.get('min_autonomy_days'))
-        session['max_off_hours'] = max_off_hours = float(form_data.get('max_off_hours'))
-        session['pvsystem_loss'] = pvsystem_loss = float(form_data.get('pvsystem_loss'))
-        session['power_demand'] = power_demand = float(form_data.get('power_demand'))
+    if request.method == 'POST':
+        form_data = request.form
+        print("Form Data:", form_data)
+        try:
+            # Get form data with default values
+            swarm_size = int(request.form.get('swarm_size', 10))
+            panel_capacity = float(request.form.get('panel_capacity', 5000))
+            sol_cost = float(request.form.get('sol_cost', 100))
+            batt_cost = float(request.form.get('batt_cost', 1000))
+            gen_cost = float(request.form.get('gen_cost', 200))
+            fuel_cost = float(request.form.get('fuel_cost', 1))
+            batt_Wh_max_unit = float(request.form.get('batt_Wh_max_unit', 1000))
+            batt_Wh_min_unit = float(request.form.get('batt_Wh_min_unit', 100))
+            gen_max_power_out = float(request.form.get('gen_max_power_out', 5000))
+            gen_fuel_req = float(request.form.get('gen_fuel_req', 2))
+            min_autonomy_days = int(request.form.get('min_autonomy_days', 1))
+            max_off_hours = int(request.form.get('max_off_hours', 1))
+            pvsystem_loss = float(request.form.get('pvsystem_loss', 1))
+            power_demand = float(request.form.get('power_demand', 10000))
+        except KeyError as e:
+            return f"Missing form field: {e}"
+        except ValueError as e:
+            return f"Invalid value for form field: {e}"
+
+        pdem = [power_demand] * 8760
         source_coords = session.get('source_coords', (0, 0))
-        max_iter = 100
-        latitude, longitude = source_coords
+        max_iter = 50
+        lat, lon = source_coords
         year = 2023
 
-
-    except TypeError:
-        flash("One or more of the input values are missing. Please check your inputs.")
-        return redirect(url_for('gensizerinputs'))
-    except ValueError:
-        flash("One or more of the input values are invalid. Please check your inputs.")
-        return redirect(url_for('gensizerinputs'))
-
-        # Instantiate PVOutput object
-        pv_system = PVOutput(lat, long, capacity, year=year)
-        # Get PV output
-        psol_unit = pv_system.pv_output()
+        # Generate mock PV output
+        psol_unit = [50] * 8760
 
         # Instantiate GenSizer with input variables
-        gen_sizer = GenSizer(swarm_size, power_demand, psol_unit,
+        gen_sizer = GenSizer(swarm_size, pdem, psol_unit,
                              sol_cost, batt_cost, gen_cost, fuel_cost,
                              batt_Wh_max_unit, batt_Wh_min_unit,
                              gen_max_power_out, gen_fuel_req,
                              max_off_hours, min_autonomy_days)
         gen_sizer.optimise(max_iter)
-        gen_sizer.plot_graphs()
 
-        solar_panels = gen_sizer.swarm[0].pos[0]
-        batteries = gen_sizer.swarm[0].pos[1]
-        generators = gen_sizer.swarm[0].pos[2]
-        fuel_used = gen_sizer.swarm[0].fuel_used
-        total_cost = gen_sizer.total_cost
-        autonomy_days = gen_sizer.swarm[0].autonomDays
+        # Get data from GenSizer
+        solar, batteries, generators, fuel_used, cost, autonomy_days, power_supply_demand_graph, battery_energy_graph = gen_sizer.plot_graphs()
 
-    return render_template('gensizer.html',
-                           solar_panels=solar_panels,
-                           batteries=batteries,
-                           generators=generators,
-                           fuel_used=fuel_used,
-                           total_cost=total_cost,
-                           autonomy_days=autonomy_days,
-                           power_demand_plot='static/plots/power_demand.png',
-                           solar_power_plot='static/plots/solar_power.png',
-                           battery_energy_plot='static/plots/battery_energy.png',
-                           generator_power_plot='static/plots/generator_power.png')
+        # Render the template with the data
+        return render_template('gensizer.html', solar=solar, batteries=batteries, generators=generators,
+                               fuel_used=fuel_used, cost=cost, autonomy_days=autonomy_days,
+                               power_supply_demand_graph=power_supply_demand_graph,
+                               battery_energy_graph=battery_energy_graph)
 
 
 @app.route('/download-boq')

@@ -15,12 +15,11 @@
     }
     .page-container {
       padding: 20px;
-      height: 70vh;
+      height: 100%;
       box-sizing: border-box;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      flex-direction: row;
+      justify-content: space-between;
     }
     #background {
       position: fixed;
@@ -38,79 +37,79 @@
 
     .content {
       display: flex;
-      justify-content: center;
       flex-direction: column;
-      align-items: center;
-      width: 100%;
+      width: 63%;
       position: relative;
     }
 
     .content-main {
       background-color: rgba(248, 248, 248, 0.8);
       border-radius: 10px;
-      padding: 20px;
-      width: 83%;
+      padding: 10px;
       display: flex;
-      height: 63vh;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      flex-direction: column;
       border: 1px solid white;
       z-index: 2;
+      margin-bottom: 20px;
+      width: 100%;
     }
 
     .content-small {
       background-color: rgba(248, 248, 248, 0.8);
       border-radius: 10px;
-      padding: 20px;
-      width: 30%;
+      padding: 10px;
       display: flex;
-      height: 10vh;
-      justify-content: center;
-      align-items: flex-start;
       flex-direction: column;
+      justify-content: center;
+      align-items: center;
       border: 1px solid white;
-      position: absolute;
-      right: 70vh;
-      transform: translateY(10px);
+      margin-bottom: 20px;
+      z-index: 2;
+      width: 100%;
     }
 
-    h1 {
-      position: absolute;
-      top: -10px;
-      left: 70px;
-      color: #32732c;
+    .extra {
+      background-color: rgba(248, 248, 248, 0.8);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid white;
+      margin-bottom: 20px;
       z-index: 2;
+      width: 100%;
     }
 
     h2 {
       color: #666;
     }
 
-        #sidebar {
+    #sidebar {
       position: fixed;
       padding-top: 70px;
-      right: 0;
-      top: 0;
+      right: 20px;
+      top: 20px;
       width: 200px;
       height: 100%;
       overflow: auto;
       background-color: rgba(0, 0, 0, 0.5);
-      display: none;
-          z-index: 5;
-
+      z-index: 5;
     }
 
     .sidebar a {
-        display: block;
-        color: #f2f2f2;
-        padding: 15px;
-        text-decoration: none;
+      display: block;
+      color: #f2f2f2;
+      padding: 15px;
+      text-decoration: none;
     }
 
     .sidebar a:hover {
-        background-color: #ddd;
-        color: black;
+      background-color: #ddd;
+      color: black;
     }
 
     #sidebar-button, #close-button {
@@ -126,60 +125,9 @@
       z-index: 6;
     }
 
-
-    form {
-      display: flex;
-      flex-direction: column;
-      flex-wrap: wrap;
-      align-items: center;
-      width: 100%;
-      margin-top: 20px;
-    }
-
-    .row {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-
-    .column {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-around;
-      margin-right: 30px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 13px;
-      font-weight: bold;
-    }
-
-    .input-group {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .input-group label {
-      width: 30%;
-    }
-
-    .input-group input {
-      width: 65%;
-    }
-
-    input[type="number"] {
-      padding: 5px;
-      font-size: 16px;
-      width: 100px;
-    }
-
     .submit-button {
-      display: block;
-      margin-top: 40px;
+      margin-top: 20px;
+      margin-bottom: 20px;
       color: white;
       background-color: #4CAF50;
       text-decoration: none;
@@ -188,27 +136,49 @@
       border-radius: 4px;
       cursor: pointer;
       font-size: 16px;
+      align-self: flex-end;
     }
 
-    .submit-button:hover {
-      background-color: #45a049;
+    .graph-container {
+      flex: 1;
+      margin-right: 10px;
+      width: 50%;
     }
 
-    .input-container label {
-      width: 30%;
+    .graph-container:last-child {
+      margin-right: 0;
     }
 
-    .input-container input[type="number"] {
-      width: 30%;
+    .graph-container img {
+      max-width: 100%;
+      max-height: 100%;
     }
 
-    .welcome-text {
-      margin-top: 7px;
+    .optimization-results {
+      width: 100%;
+      padding: 10px;
       text-align: left;
-      font-weight: bold; /
     }
 
-     </style>
+    .optimization-results p {
+      margin: 5px 0;
+    }
+
+    .extra {
+      background-color: rgba(248, 248, 248, 0.8);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid white;
+      margin-bottom: 20px;
+      z-index: 2;
+      width: 100%;
+    }
+
+  </style>
 </head>
 <body>
 <a href="{{ url_for('welcome') }}">
@@ -217,76 +187,42 @@
 <div id="background"></div>
 <div class="page-container">
     <button id="sidebar-button">&#9776;</button>
-    <button id="close-button" style="display: none;">&#10006;</button>
     <div id="sidebar" class="sidebar">
         <a href="https://github.com/finmuir/powergen-py">GitHub</a>
         <a href="#">About Us</a>
         <a href="#">Contact</a>
     </div>
     <div class="content">
+        <div class="content-small">
+            <h2>Graphs</h2>
+            <!-- Display the graphs -->
+            <div class="graphs" style="display: flex;">
+                <div class="graph-container">
+                    <iframe src="/static/plots/power_supply_demand.html" width="100%" height="400px" frameborder="0"></iframe>
+                </div>
+                <div class="graph-container">
+                         <iframe src="/static/plots/battery_energy.html" width="100%" height="400px" frameborder="0"></iframe>
+                </div>
+            </div>
+        </div>
         <div class="content-main">
             <h2>Optimization Results</h2>
             <!-- Display the optimization results -->
             <div class="optimization-results">
-                <p>Number of Solar Panels: {{ solar_panels }}</p>
+                <p>Number of Solar Panels: {{ solar }}</p>
                 <p>Number of Batteries: {{ batteries }}</p>
                 <p>Number of Generators: {{ generators }}</p>
                 <p>Fuel Used: {{ fuel_used }}</p>
                 <p>Total Cost: {{ total_cost }}</p>
                 <p>Autonomy Days: {{ autonomy_days }}</p>
             </div>
-            <!-- Display the graphs -->
-            <div class="graphs">
-                <div class="graph-container">
-                    <!-- Graph 1 Placeholder -->
-                    <canvas id="graph1"></canvas>
-                </div>
-                <div class="graph-container">
-                    <!-- Graph 2 Placeholder -->
-                    <canvas id="graph2"></canvas>
-                </div>
-                <div class="graph-container">
-                    <!-- Graph 3 Placeholder -->
-                    <canvas id="graph3"></canvas>
-                </div>
-                <div class="graph-container">
-                    <!-- Graph 4 Placeholder -->
-                    <canvas id="graph4"></canvas>
-                </div>
-            </div>
-           </div>
             <a href="{{ url_for('billofquantities') }}" class="submit-button">Bill of Quantities</a>
         </div>
+        <div class="extra">
+            <h2>Extra Section</h2>
+            <!-- Add content for the extra section here -->
+            <p>This is an additional section where you can add extra content.</p>
         </div>
     </div>
 </div>
-<div class = "content-small">
-<p class="welcome-text">3. GridMaster next needs to know some information about the equipment you're using. This will help the algorithm to provide additional data that will help with your implementation! </p>
-  <script>
-  document.getElementById('sidebar-button').onclick = function() {
-    var sidebar = document.getElementById('sidebar');
-    if (sidebar.style.display === "" || sidebar.style.display === 'none') {
-      sidebar.style.display = 'block';
-    } else {
-      sidebar.style.display = 'none';
-    }
-  }
-
-  var sidebarButton = document.getElementById('sidebar-button');
-  var closeButton = document.getElementById('close-button');
-  var sidebar = document.getElementById('sidebar');
-
-  sidebarButton.onclick = function() {
-    sidebar.style.display = 'block';
-    sidebarButton.style.display = 'none';
-    closeButton.style.display = 'block';
-  }
-
-  closeButton.onclick = function() {
-    sidebar.style.display = 'none';
-    closeButton.style.display = 'none';
-    sidebarButton.style.display = 'block';
-  }
-</script>
-</body>
-</html>
+<script>

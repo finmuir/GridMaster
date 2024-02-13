@@ -17,6 +17,10 @@ import numpy as np
 import os
 from PVoutput2 import PVOutput
 
+import os
+import plotly.graph_objs as go
+import plotly.io as pio
+
 class Particle:
     # technical trackers
     fuel_used = 0
@@ -533,13 +537,15 @@ class GenSizer:
         self.total_cost = self.swarm[0].cost
         self.battery_power()
 
-        # displaying results in console
-        print("\nSolar Panels:\t\t", self.swarm[0].pos[0])
-        print("Batteries:\t\t", self.swarm[0].pos[1])
-        print("Generators:\t\t", self.swarm[0].pos[2])
-        print("Fuel used:\t\t", self.swarm[0].fuel_used)
-        print("Cost:\t\t\t", round(self.swarm[0].cost, 2))
-        print("Days of Autonomy:\t", round(self.swarm[0].autonomDays, 2))
+    def plot_graphs(self):
+        # Extracting necessary data
+        Num_solar = self.swarm[0].pos[0]
+        num_batteries = self.swarm[0].pos[1]
+        num_generator = self.swarm[0].pos[2]
+        fuel_used = self.swarm[0].fuel_used
+        Cost = round(self.swarm[0].cost, 2)
+        autonomDays = round(self.swarm[0].autonomDays, 2)
+
         t = [x for x in range(72)]
         xmax = 72
 
@@ -549,75 +555,145 @@ class GenSizer:
         power_generator = self.swarm[0].Pgen
         power_solar = self.swarm[0].Psol
 
-        # Plot power supplied from batteries (discharge and charge), generators, solar panels, and power demand against time
-        plt.plot(t, power_demand[:len(t)], label="Power Demand", color="black")
-        plt.plot(t, power_battery_discharge[:len(t)], label="Battery Discharge Power", linestyle="--", color="blue")
-        plt.plot(t, power_battery_charge[:len(t)], label="Battery Charge Power", linestyle="-.", color="orange")
-        plt.plot(t, power_generator[:len(t)], label="Power from Generators", linestyle="-.", color="red")
-        plt.plot(t, power_solar[:len(t)], label="Power from Solar Panels", linestyle=":", color="green")
-
-        # Add labels and title
-        plt.xlabel("Time (h)")
-        plt.ylabel("Power (W)")
-        plt.title("Power Supply and Demand vs Time")
-        # Add legend
-        plt.legend()
-        # Ensure the directory exists
+        # Create directory if it doesn't exist
         os.makedirs('static/plots/', exist_ok=True)
-        # Save the plot as an image
-        plt.savefig('static/plots/power_supply_demand.png')
-        # Show plot
-        plt.show()
 
-
-
-        # Ensure the directory exists
-        os.makedirs('static/plots/', exist_ok=True)
+        # Plot power supply and demand against time
+        fig_supply_demand = go.Figure()
+        fig_supply_demand.add_trace(
+            go.Scatter(x=t, y=power_demand[:len(t)], mode='lines', name='Power Demand', line=dict(color='black')))
+        fig_supply_demand.add_trace(
+            go.Scatter(x=t, y=power_battery_discharge[:len(t)], mode='lines', name='Battery Discharge Power',
+                       line=dict(color='blue', dash='dash')))
+        fig_supply_demand.add_trace(
+            go.Scatter(x=t, y=power_battery_charge[:len(t)], mode='lines', name='Battery Charge Power',
+                       line=dict(color='orange', dash='dashdot')))
+        fig_supply_demand.add_trace(
+            go.Scatter(x=t, y=power_generator[:len(t)], mode='lines', name='Power from Generators',
+                       line=dict(color='red', dash='dashdot')))
+        fig_supply_demand.add_trace(
+            go.Scatter(x=t, y=power_solar[:len(t)], mode='lines', name='Power from Solar Panels',
+                       line=dict(color='green', dash='dot')))
+        fig_supply_demand.update_layout(title='Power Supply and Demand vs Time', xaxis_title='Time (h)',
+                                        yaxis_title='Power (W)')
+        plot_file_supply_demand = 'static/plots/power_supply_demand.html'
+        pio.write_html(fig_supply_demand, file=plot_file_supply_demand, auto_open=False)
 
         # Plot battery energy
-        plt.figure()
-        plt.plot(t, self.swarm[0].Ebatt[0:xmax], label="Energy stored")
-        plt.xlabel("Time (h)")
-        plt.ylabel("Battery Energy (Wh)")
-        plt.title("Battery Energy vs Time")
-        plt.savefig('static/plots/battery_energy.png')
-        plt.show()
-        plt.close()
+        fig_battery_energy = go.Figure()
+        fig_battery_energy.add_trace(
+            go.Scatter(x=t, y=self.swarm[0].Ebatt[0:xmax], mode='lines', name='Energy stored', line=dict(color='blue')))
+        fig_battery_energy.update_layout(title='Battery Energy vs Time', xaxis_title='Time (h)',
+                                         yaxis_title='Battery Energy (Wh)')
+        plot_file_battery_energy = 'static/plots/battery_energy.html'
+        pio.write_html(fig_battery_energy, file=plot_file_battery_energy, auto_open=False)
 
-#Placeholder values, replace with actual data need research to find real values and take values from network dessigner
-swarm_size = 100
-
-power_demand = [10000, 10000, 10000, 10000, 10000, 10000, 10000, 40000, 60000, 60000, 60000, 80000, 80000, 80000, 80000,
-                80000, 80000, 80000, 100000, 100000, 100000, 100000, 60000, 30000] * 365  # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
-sol_cost = 200             # Example: Cost of a single PV panel(input)
-batt_cost = 10000               # Example: Cost of a single battery(input or prereq)
-gen_cost = 200                 # Example: Cost of a single diesel generator()
-fuel_cost = 1.5                # Example: Cost of fuel per liter (can change so probably input eg if fuel is hard to import or bought in bulk)
-batt_Wh_max_unit = 10000       # Example: Battery maximum Wh capacity(input depeneds on battery)
-batt_Wh_min_unit = 1000        # Example: Battery minimum Wh capacity(input depends on battery)
-gen_max_power_out = 5000       # Example: Maximum power output of a generator()
-gen_fuel_req = 10              # Example: Fuel requirement per hour of generation(depends on generator input)
-max_off_hours = 24             # Example: Maximum hours the grid can be offline(limit set by user)
-min_autonomy_days = 3          # Example: Minimum number of autonomy days required()
-
-#Example usage
-latitude = -14.24580667  # Latitude of Mthembanji source
-longitude = 34.60600833  # Longitude of Mthembanji source
-panel_capacity = 5000  # Capacity of PV panel in Watts
-year = 2022  # Year of data(most up to date year)
+        return Num_solar, num_batteries, num_generator, fuel_used, Cost, autonomDays, plot_file_supply_demand, plot_file_battery_energy
 
 
-pv_subsystem = PVOutput(latitude, longitude, panel_capacity, year=year)
-output = pv_subsystem.pv_output()
-psol_unit = output     # Example: Hourly power provided by a single PV panel (come from pv output)
-print(psol_unit)
-#Instantiate GenSizer with all required parameters
-gen_sizer = GenSizer(swarm_size, power_demand, psol_unit,
-                    sol_cost, batt_cost, gen_cost, fuel_cost,
-                    batt_Wh_max_unit, batt_Wh_min_unit,
-                    gen_max_power_out, gen_fuel_req,
-                    max_off_hours, min_autonomy_days)
 
-#Perform optimization
-max_iter = 50  # Example: Maximum number of iterations
-gen_sizer.optimise(max_iter)
+    # def plot_graphs(self):
+    #
+    #     # displaying results in console
+    #     print("\nSolar Panels:\t\t", self.swarm[0].pos[0])
+    #     print("Batteries:\t\t", self.swarm[0].pos[1])
+    #     print("Generators:\t\t", self.swarm[0].pos[2])
+    #     print("Fuel used:\t\t", self.swarm[0].fuel_used)
+    #     print("Cost:\t\t\t", round(self.swarm[0].cost, 2))
+    #     print("Days of Autonomy:\t", round(self.swarm[0].autonomDays, 2))
+    #     t = [x for x in range(72)]
+    #     xmax = 72
+    #
+    #     Num_solar=self.swarm[0].pos[0]
+    #     num_batteries =self.swarm[0].pos[1]
+    #     num_generator=self.swarm[0].pos[2]
+    #     fuel_used=self.swarm[0].fuel_used
+    #     Cost=round(self.swarm[0].cost, 2)
+    #     autonomDays=round(self.swarm[0].autonomDays, 2)
+    #
+    #
+    #     power_demand = self.Pdem
+    #     power_battery_discharge = self.power_discharge
+    #     power_battery_charge = self.power_charge
+    #     power_generator = self.swarm[0].Pgen
+    #     power_solar = self.swarm[0].Psol
+    #     # Ensure the directory exists
+    #
+    #     os.makedirs('static/plots/', exist_ok=True)
+    #
+    #     # Plot power supplied from batteries (discharge and charge), generators, solar panels, and power demand against time
+    #     plt.plot(t, power_demand[:len(t)], label="Power Demand", color="black")
+    #     plt.plot(t, power_battery_discharge[:len(t)], label="Battery Discharge Power", linestyle="--", color="blue")
+    #     plt.plot(t, power_battery_charge[:len(t)], label="Battery Charge Power", linestyle="-.", color="orange")
+    #     plt.plot(t, power_generator[:len(t)], label="Power from Generators", linestyle="-.", color="red")
+    #     plt.plot(t, power_solar[:len(t)], label="Power from Solar Panels", linestyle=":", color="green")
+    #
+    #     # Add labels and title
+    #     plt.xlabel("Time (h)")
+    #     plt.ylabel("Power (W)")
+    #     plt.title("Power Supply and Demand vs Time")
+    #     # Add legend
+    #     plt.legend()
+    #     # Ensure the directory exists
+    #     os.makedirs('static/plots/', exist_ok=True)
+    #     # Save the plot as an image
+    #     plt.savefig('static/plots/power_supply_demand.png')
+    #     # Show plot
+    #
+    #
+    #     # Plot battery energy
+    #     plt.figure()
+    #     plt.plot(t, self.swarm[0].Ebatt[0:xmax], label="Energy stored")
+    #     plt.xlabel("Time (h)")
+    #     plt.ylabel("Battery Energy (Wh)")
+    #     plt.title("Battery Energy vs Time")
+    #     plt.savefig('static/plots/battery_energy.png')
+    #     plt.close()
+    #
+    #     return (Num_solar
+    #             ,num_batteries,
+    #             num_generator,
+    #             fuel_used,
+    #             Cost,
+    #             autonomDays)
+
+
+#
+# #Placeholder values, replace with actual data need research to find real values and take values from network dessigner
+# swarm_size = 100
+#
+# power_demand = [10000, 10000, 10000, 10000, 10000, 10000, 10000, 40000, 60000, 60000, 60000, 80000, 80000, 80000, 80000,
+#                 80000, 80000, 80000, 100000, 100000, 100000, 100000, 60000, 30000] * 365  # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
+# sol_cost = 200             # Example: Cost of a single PV panel(input)
+# batt_cost = 10000               # Example: Cost of a single battery(input or prereq)
+# gen_cost = 200                 # Example: Cost of a single diesel generator()
+# fuel_cost = 1.5                # Example: Cost of fuel per liter (can change so probably input eg if fuel is hard to import or bought in bulk)
+# batt_Wh_max_unit = 10000       # Example: Battery maximum Wh capacity(input depeneds on battery)
+# batt_Wh_min_unit = 1000        # Example: Battery minimum Wh capacity(input depends on battery)
+# gen_max_power_out = 5000       # Example: Maximum power output of a generator()
+# gen_fuel_req = 10              # Example: Fuel requirement per hour of generation(depends on generator input)
+# max_off_hours = 24             # Example: Maximum hours the grid can be offline(limit set by user)
+# min_autonomy_days = 3          # Example: Minimum number of autonomy days required()
+#
+# #Example usage
+# latitude = -14.24580667  # Latitude of Mthembanji source
+# longitude = 34.60600833  # Longitude of Mthembanji source
+# panel_capacity = 5000  # Capacity of PV panel in Watts
+# year = 2022  # Year of data(most up to date year)
+#
+#
+# pv_subsystem = PVOutput(latitude, longitude, panel_capacity, year=year)
+# output = pv_subsystem.pv_output()
+# psol_unit = output     # Example: Hourly power provided by a single PV panel (come from pv output)
+# print(psol_unit)
+# #Instantiate GenSizer with all required parameters
+# gen_sizer = GenSizer(swarm_size, power_demand, psol_unit,
+#                     sol_cost, batt_cost, gen_cost, fuel_cost,
+#                     batt_Wh_max_unit, batt_Wh_min_unit,
+#                     gen_max_power_out, gen_fuel_req,
+#                     max_off_hours, min_autonomy_days)
+#
+# #Perform optimization
+# max_iter = 50  # Example: Maximum number of iterations
+# gen_sizer.optimise(max_iter)
+# gen_sizer.plot_graphs()
