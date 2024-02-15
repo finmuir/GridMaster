@@ -392,22 +392,34 @@ def download_boq():
     )
 @app.route('/billofquantities', methods=['GET', 'POST'])
 def billofquantities():
-    # Parameters for BillOfQuantities - you might want to retrieve these from the session or a form
-    cable_cost_per_km = 1000
-    cable_length_km = 5
-    pole_cost = 500
-    num_customers = 10
-    daily_running_cost = 50
-    installation_cost = 5000
+    quantities_and_costs = {
+        "Nine Metre Poles": (36, 10, 100, 2),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "LV Insulators": (36, 20, 50, 1.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "Bobbin Insulators": (144, 5, 30, 0.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "Stay Blocks": (48, 8, 40, 1),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "D Irons": (72, 15, 60, 1.5),  # Quantity, Unit Cost ($), Labor Rate($), Installation Time (hrs)
+        "Four-way Boards": (36, 12, 50, 2),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "50mm ACC Conductor": (6000, 2, 80, 10),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "16mm Twin Figure 8": (1000, 3, 90, 5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "2x16mm Armored Cable": (80, 5, 70, 4),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "PG Clamp AL/AL": (150, 1, 20, 1.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "PG Clamp AL/CU": (150, 1, 20, 1.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+        "Earth Rod": (36, 4, 50, 2.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
+    }
 
-    # Create an instance of the BillOfQuantities with the given parameters
-    boq = BillOfQuantities(cable_cost_per_km, cable_length_km, pole_cost, num_customers, daily_running_cost, installation_cost)
+    # Create an instance of the BillOfQuantities with the quantities and costs
+    boq = BillOfQuantities(quantities_and_costs)
 
     # Generate the bill of quantities
     bill_of_quantities = boq.generate_bill_of_quantities()
 
-    # Render the bill_of_quantities.html template, passing in the bill_of_quantities dictionary
-    return render_template('bill_of_quantities.html', bill_of_quantities=bill_of_quantities)
+    # Calculate total cost
+    total_cost = sum(details['Total Cost'] for details in bill_of_quantities.values())
+
+    # Calculate cost per customer (assuming 61 customers)
+    customer_cost = total_cost / 61
+
+    return render_template('bill_of_quantities.html', bill_of_quantities=bill_of_quantities, total_cost=total_cost, customer_cost=customer_cost)
 
 if __name__ == '__main__':
     app.run(debug=True)
