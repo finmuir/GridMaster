@@ -150,6 +150,7 @@ def plot_data():
         session['cost_per_km'] = cost_per_km = float(form_data.get('cost_per_km'))
         session['max_voltage_drop'] = max_voltage_drop = float(form_data.get('max_voltage_drop'))
         session['max_customers'] = max_customers = int(form_data.get('max_customers'))
+        session['distance_threshold'] = distance_threshold = int(form_data.get('distance_threshold'))
 
     except TypeError:
         flash("One or more of the input values are missing. Please check your inputs.")
@@ -157,6 +158,8 @@ def plot_data():
     except ValueError:
         flash("One or more of the input values are invalid. Please check your inputs.")
         return redirect(url_for('input_parameters'))
+
+    distance_threshold = float(request.form.get('distance_threshold', '0'))
 
     # Run the clustering script with the form data
     clusterer = cc.CustomerClustering.import_from_csv(
@@ -167,8 +170,14 @@ def plot_data():
         resistance_per_km=resistance_per_km,
         current_rating=current_rating,
         cost_per_km=cost_per_km,
-        max_voltage_drop=max_voltage_drop
+        max_voltage_drop=max_voltage_drop,
+        distance_threshold=distance_threshold
     )
+
+    if clusterer is None or not hasattr(clusterer, 'cluster'):
+        flash("No customers within the specified distance threshold or an error occurred. Please adjust the threshold or check your input data.")
+        return redirect(url_for('cluster_inputs'))
+
     clusterer.cluster(max_customers=max_customers)
 
     # Prepare the data for the plot
@@ -214,6 +223,7 @@ def plot_data():
     return render_template('clusterresults.html', result=result, source_coords=source_coords)
 
 
+
 @app.route('/plot-data-network', methods=['GET', 'POST'])
 def plot_data_network():
     try:
@@ -225,6 +235,7 @@ def plot_data_network():
         cost_per_km = session.get('cost_per_km', 0)
         max_voltage_drop = session.get('max_voltage_drop', 0)
         max_customers = session.get('max_customers', 0)
+        distance_threshold = session.get('distance_threshold', 0)
 
         file_name = session.get('file_name', None)
         if not file_name or file_name == 0:
@@ -245,6 +256,7 @@ def plot_data_network():
     max_current = current_rating  # A
     cost_per_km = cost_per_km  # £/km
     max_volt_drop = max_voltage_drop  # V
+    distance_threshold = distance_threshold  # m
 
     clusterer = cc.CustomerClustering.import_from_csv(
         f"csv_uploads/{file_name}",
@@ -254,8 +266,15 @@ def plot_data_network():
         resistance_per_km=res_per_km,
         current_rating=max_current,
         cost_per_km=cost_per_km,
-        max_voltage_drop=max_volt_drop
+        max_voltage_drop=max_volt_drop,
+        distance_threshold=distance_threshold
     )
+
+    if clusterer is None or not hasattr(clusterer, 'cluster'):
+        flash(
+            "No customers within the specified distance threshold or an error occurred. Please adjust the threshold or check your input data.")
+        return redirect(url_for('cluster_inputs'))
+
     clusterer.cluster(max_customers=max_customers)
 
     net = nd.NetworkDesigner.import_from_csv(
@@ -274,11 +293,16 @@ def plot_data_network():
     edges, pos = net.draw_graph()
     code = ''
 
-    customer_icons = ['mapbox-maki-93d5dd4/icons/markerblue.svg', 'mapbox-maki-93d5dd4/icons/markercharcoal.svg', 'mapbox-maki-93d5dd4/icons/markerdarkblue.svg',
-                      'mapbox-maki-93d5dd4/icons/markerdarkgreen.svg', 'mapbox-maki-93d5dd4/icons/markerdarkyellow.svg', 'mapbox-maki-93d5dd4/icons/markergreen.svg',
-                      'mapbox-maki-93d5dd4/icons/markergrey.svg', 'mapbox-maki-93d5dd4/icons/markerlightblue.svg', 'mapbox-maki-93d5dd4/icons/markerlightgreen.svg',
-                      'mapbox-maki-93d5dd4/icons/markerlightpurple.svg', 'mapbox-maki-93d5dd4/icons/markerlightred.svg', 'mapbox-maki-93d5dd4/icons/markerorange.svg',
-                      'mapbox-maki-93d5dd4/icons/markerpink.svg', 'mapbox-maki-93d5dd4/icons/markerpurple.svg', 'mapbox-maki-93d5dd4/icons/markerred.svg', 'mapbox-maki-93d5dd4/icons/markerwhite.svg',
+    customer_icons = ['mapbox-maki-93d5dd4/icons/markerblue.svg', 'mapbox-maki-93d5dd4/icons/markercharcoal.svg',
+                      'mapbox-maki-93d5dd4/icons/markerdarkblue.svg',
+                      'mapbox-maki-93d5dd4/icons/markerdarkgreen.svg', 'mapbox-maki-93d5dd4/icons/markerdarkyellow.svg',
+                      'mapbox-maki-93d5dd4/icons/markergreen.svg',
+                      'mapbox-maki-93d5dd4/icons/markergrey.svg', 'mapbox-maki-93d5dd4/icons/markerlightblue.svg',
+                      'mapbox-maki-93d5dd4/icons/markerlightgreen.svg',
+                      'mapbox-maki-93d5dd4/icons/markerlightpurple.svg', 'mapbox-maki-93d5dd4/icons/markerlightred.svg',
+                      'mapbox-maki-93d5dd4/icons/markerorange.svg',
+                      'mapbox-maki-93d5dd4/icons/markerpink.svg', 'mapbox-maki-93d5dd4/icons/markerpurple.svg',
+                      'mapbox-maki-93d5dd4/icons/markerred.svg', 'mapbox-maki-93d5dd4/icons/markerwhite.svg',
                       'mapbox-maki-93d5dd4/icons/markeryellow.svg']
 
     source = True

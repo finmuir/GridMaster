@@ -214,50 +214,58 @@
 
     <script>
 
-         var map = L.map('map').setView([{{ source_coords[0] }}, {{ source_coords[1] }}], 17);
+        var map = L.map('map').setView([{{ source_coords[0] }}, {{ source_coords[1] }}], 17);
+
         L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppZW5veTEwM2RuM2Vwa2Z2MGE5amd4In0.xLfkUiN6YS9EVfRNyh5umQ', {
             maxZoom: 18,
             tileSize: 512,
             zoomOffset: -1,
             accessToken: 'pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppaGV2amgwMDhzM2RwcGE5eXllanM0In0.JGhdq86XC-ShgG2lokibfw'
         }).addTo(map);
-
+        source_mark_icon = L.icon({
+                    iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/charging-station.svg',
+                    iconSize: [25, 41],
+                    iconAnchor: [12.5,20.5],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+        L.marker([{{ source_coords[0] }}, {{ source_coords[1] }}], {icon: source_mark_icon, draggable: 'true'}).addTo(map)
         var points = {{ result.points | safe }};
         points.forEach(point => {
             var markerIcon;
 
-    if(point['type']=="pole"){
-        markerIcon = L.icon({
-            iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/observation-tower.svg',
-            iconSize: [22, 31],
-            iconAnchor: [7.5, 7.5],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
+            if(point['type']=="pole"){
+                markerIcon = L.icon({
+                    iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/observation-tower.svg',
+                    iconSize: [22, 31],
+                    iconAnchor: [7.5, 7.5],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+            } else {
+                markerIcon = L.icon({
+                    iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/markergreen.svg',
+                    iconSize: [20, 27],
+                    iconAnchor: [7.5, 7.5],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+            }
+
+            var marker = L.marker([point.lat, point.lon], {icon: markerIcon, draggable: 'true'}).addTo(map);
+
+            marker.on('dragend', function (e) {
+                var lat = marker.getLatLng().lat,
+                    lon = marker.getLatLng().lng,
+                    label = point.label;
+
+                // Send the new position to the server
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/update-marker', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.send('lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lon) + '&label=' + encodeURIComponent(label));
+            });
         });
-    } else {
-        markerIcon = L.icon({
-            iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/markergreen.svg',
-            iconSize: [20, 27],
-            iconAnchor: [7.5, 7.5],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-        });
-    }
-
-    var marker = L.marker([point.lat, point.lon], {icon: markerIcon, draggable: 'true'}).addTo(map);
-
-    marker.on('dragend', function (e) {
-        var lat = marker.getLatLng().lat,
-            lon = marker.getLatLng().lng,
-            label = point.label;
-
-        // Send the new position to the server
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/update-marker', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.send('lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lon) + '&label=' + encodeURIComponent(label));
-    });
-});
 
         var sidebarButton = document.getElementById('sidebar-button');
         var closeButton = document.getElementById('close-button');

@@ -84,7 +84,7 @@ class CustomerClustering:
     def import_from_csv(cls, filename, network_voltage,
                         pole_cost, pole_spacing, resistance_per_km,
                         current_rating, cost_per_km, scale_factor=1,
-                        max_voltage_drop=None, max_distance=None):
+                        max_voltage_drop=None, max_distance=None, distance_threshold=None):
         """
         Creates CustomerCLustering object and generates Customer
         objects based on data within specified CSV file.
@@ -131,22 +131,45 @@ class CustomerClustering:
 
         # import customers and create initial single cluster
         customers = []
+        source_coord = None
         source = True
+
         for customer_id, data in df.items():
             if source:
                 source_coord = (float(data[0]), float(data[1]))
                 source = False
             else:
-                position = (scale_factor * data["X"], scale_factor * data["Y"])  # X 0, Y 1
+                position = (scale_factor * float(data["X"]), scale_factor * float(data["Y"]))
                 power_demand = data[2:]
-                customers.append(Customer(customer_id, position, power_demand))
+                if distance_threshold is not None:
+                    customer_distance = cls.calculate_distance(source_coord[0], source_coord[1], position[0], position[1])
+                    if customer_distance <= distance_threshold:
+                        customers.append(Customer(customer_id, position, power_demand))
 
-        init_cluster = InitCluster(customers)
+                        # Right before initiating InitCluster
+        print(f"Number of customers being passed to InitCluster: {len(customers)}")
+        if not customers:
+            print("No customers within the specified distance threshold.")
+            # Handle the case appropriately, e.g., by returning None or raising an exception
+            return None  # Or raise an exception
+        else:
+            init_cluster = InitCluster(customers)
 
         return cls(init_cluster, source_coord, network_voltage, pole_cost,
                    pole_spacing, resistance_per_km, current_rating,
                    cost_per_km, max_voltage_drop=max_voltage_drop,
                    max_distance=max_distance)
+
+    @staticmethod
+    def calculate_distance(lat1, lon1, lat2, lon2):
+        R = 6371  # Radius of the Earth in kilometers
+        dlat = math.radians(lat2 - lat1)
+        dlon = math.radians(lon2 - lon1)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        distance = R * c
+        return distance * 1000
+
 
     @classmethod
     def import_from_OTHER(cls):
