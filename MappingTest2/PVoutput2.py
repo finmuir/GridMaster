@@ -103,7 +103,7 @@ class PVOutput:
         r = s.get(url, params=args)
         parsed_response = json.loads(r.text)
         data = pd.read_json(json.dumps(parsed_response), orient='index')
-        output=(p_out * 1000 for p_out in data["electricity"].values.tolist())
+        output=[p_out * 1000 for p_out in data["electricity"].values.tolist()]
 
         return output
 

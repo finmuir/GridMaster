@@ -61,7 +61,7 @@ class Particle:
         self.Ebatt = [0] * (array_len + 1)  # to avoid overshooting
 
         # random x, y, z coordinates
-        self.pos = [random.randint(0, 500), random.randint(0, 500), random.randint(0, 500)]
+        self.pos = [random.randint(100, 200), random.randint(100, 200), random.randint(100, 200)]
 
         # initial velocity is zero in all directions
         self.vel = [0, 0, 0]
@@ -599,7 +599,7 @@ class GenSizer:
         plot_file_supply_demand = 'static/plots/power_supply_demand.html'
         pio.write_html(fig_supply_demand, file=plot_file_supply_demand, auto_open=False)
 
-        pio.show(fig_supply_demand)
+        #pio.show(fig_supply_demand)
 
         # Extract battery energy data from the swarm object
         battery_energy_data = self.swarm[0].Ebatt[0:xmax]
@@ -627,7 +627,7 @@ class GenSizer:
             plot_file_battery_energy = 'static/plots/battery_energy.html'
             pio.write_html(fig_battery_energy, file=plot_file_battery_energy, auto_open=False)
 
-            pio.show(fig_battery_energy)
+            #pio.show(fig_battery_energy)
 
 
 
@@ -635,20 +635,20 @@ class GenSizer:
         return Num_solar, num_batteries, num_generator, fuel_used, Cost, autonomDays, plot_file_supply_demand, plot_file_battery_energy
 
 
-
-# # #Placeholder values, replace with actual data need research to find real values and take values from network dessigner
-# swarm_size = 1000
-# power_demand=[10000]*8760
 #
-# #power_demand = [100000, 100000, 100000, 100000, 100000, 100000, 100000, 400000, 600000, 600000, 600000, 800000, 800000, 800000, 800000,
+# # #Placeholder values, replace with actual data need research to find real values and take values from network dessigner
+# swarm_size = 10
+# power_demand=[12500]*8760
+#
+# #power_demand = [10000, 10000, 100000, 100000, 100000, 100000, 100000, 400000, 600000, 600000, 600000, 800000, 800000, 800000, 800000,
 # #800000, 800000, 800000, 1000000, 1000000, 1000000, 1000000, 600000, 300000] * 365  # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
-# sol_cost = 200             # Example: Cost of a single PV panel(input)
+# sol_cost = 5000            # Example: Cost of a single PV panel(input)
 # batt_cost = 10000               # Example: Cost of a single battery(input or prereq)
-# gen_cost = 200                 # Example: Cost of a single diesel generator()
+# gen_cost =  100000              # Example: Cost of a single diesel generator()
 # fuel_cost = 1.5                # Example: Cost of fuel per liter (can change so probably input eg if fuel is hard to import or bought in bulk)
 # batt_Wh_max_unit = 10000       # Example: Battery maximum Wh capacity(input depeneds on battery)
 # batt_Wh_min_unit = 1000        # Example: Battery minimum Wh capacity(input depends on battery)
-# gen_max_power_out = 5000      # Example: Maximum power output of a generator()
+# gen_max_power_out = 10000      # Example: Maximum power output of a generator()
 # gen_fuel_req = 10              # Example: Fuel requirement per hour of generation(depends on generator input)
 # max_off_hours = 24             # Example: Maximum hours the grid can be offline(limit set by user)
 # min_autonomy_days = 0.25         # Example: Minimum number of autonomy days required()

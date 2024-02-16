@@ -12,7 +12,7 @@ import os
 from bill_of_quantities import BillOfQuantities
 import csv
 from flask import Response
-from bill_of_quantities import generate_bill_of_quantities
+from bill_of_quantities import BillOfQuantities
 import io
 from PVoutput2 import PVOutput
 from Gensizer2 import GenSizer
@@ -350,8 +350,13 @@ def gensizer():
         lat, lon = source_coords
         year = 2023
 
-        # Generate mock PV output
-        psol_unit = [50] * 8760
+        # pv_subsystem = PVOutput(lat, lon, panel_capacity, year=year)
+        # psol_unit = pv_subsystem.pv_output()
+        # # Hourly power provided by a single PV panel (come from pv output)
+        # print(psol_unit)
+
+        #Generate example PV output
+        psol_unit = [0.0, 0.0, 0.0, 7.0, 74.0, 190.0, 345.00000000000006, 498.0, 594.0, 657.0, 611.0, 548.0, 459.0, 298.0, 134.0, 25.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,] * 365
 
         # Instantiate GenSizer with input variables
         gen_sizer = GenSizer(swarm_size, pdem, psol_unit,
@@ -373,7 +378,7 @@ def gensizer():
 
 @app.route('/download-boq')
 def download_boq():
-    data = generate_bill_of_quantities()  # Assuming this function returns your bill of quantities data as a dictionary
+    data = BillOfQuantities.generate_bill_of_quantities()  # Assuming this function returns your bill of quantities data as a dictionary
     proxy = io.StringIO()
 
     writer = csv.writer(proxy)
