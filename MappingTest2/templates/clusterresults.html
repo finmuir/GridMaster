@@ -50,20 +50,20 @@
       width: 200px;
       height: 100%;
       overflow: auto;
-      background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
-      display: none; /* initially hidden */
+      background-color: rgba(0, 0, 0, 0.5); 
+      display: none; 
       z-index: 2;
     }
 
     .sidebar a {
-      display: block; /* Make the links appear below each other */
-      color: #f2f2f2; /* Color of links */
-      padding: 15px; /* Padding inside the sidebar */
-      text-decoration: none; /* Remove underline from links */
+      display: block; 
+      color: #f2f2f2; 
+      padding: 15px; 
+      text-decoration: none; 
     }
 
     .sidebar a:hover {
-      background-color: #ddd; /* Change color of links on hover */
+      background-color: #ddd;
       color: black;
     }
 
@@ -176,7 +176,6 @@
     </style>
 </head>
 <body>
-    <!-- Your HTML Here -->
     <a href="{{ url_for('welcome') }}">
       <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
     </a>
@@ -250,16 +249,22 @@
                     popupAnchor: [1, -34],
                     shadowSize: [41, 41]
                 });
+
             }
 
             var marker = L.marker([point.lat, point.lon], {icon: markerIcon, draggable: 'true'}).addTo(map);
 
+            if(point['type'] == "customer") { 
+                marker.on('click', function() {
+                    map.removeLayer(marker); 
+                });
+            }
+            
             marker.on('dragend', function (e) {
                 var lat = marker.getLatLng().lat,
                     lon = marker.getLatLng().lng,
                     label = point.label;
 
-                // Send the new position to the server
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', '/update-marker', true);
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -284,7 +289,6 @@
         }
 
 document.getElementById('screenshot-button').addEventListener('click', function() {
-    // Replace 'map' with the id of your map container if it's different
     var mapContainer = document.getElementById('map');
 
     html2canvas(mapContainer).then(function(canvas) {
