@@ -16,6 +16,10 @@ from bill_of_quantities import BillOfQuantities
 import io
 from PVoutput2 import PVOutput
 from Gensizer2 import GenSizer
+import requests
+import json
+
+
 
 app = Flask(__name__)
 
@@ -339,6 +343,8 @@ def plot_data_network():
 
 @app.route('/geninputs')
 def gensizerinputs():
+
+
     return render_template('gensizerinputs.html')
 
 
@@ -362,13 +368,26 @@ def gensizer():
             min_autonomy_days = int(request.form.get('min_autonomy_days', 1))
             max_off_hours = int(request.form.get('max_off_hours', 1))
             pvsystem_loss = float(request.form.get('pvsystem_loss', 1))
-            power_demand = float(request.form.get('power_demand', 10000))
+            day_demand = json.loads(request.form.get('yearly_demand_array', '[]'))
+            power_demand = []
+
+            # Append the 24-hour demand array to power_demand 365 times
+            # Multiply each value in the day_demand array by 61
+            modified_demand = [value * 61 for value in day_demand]
+
+            # Duplicate the modified_demand array for the full year (8760 hours)
+            power_demand = modified_demand * 365
+
+            print("Yearly Demand Array Length:", len(power_demand))
+
+            print("Yearly Demand Array:", power_demand)
+            print(len(power_demand))
         except KeyError as e:
             return f"Missing form field: {e}"
         except ValueError as e:
             return f"Invalid value for form field: {e}"
 
-        pdem = [power_demand] * 8760
+        #pdem = [power_demand] * 8760
         source_coords = session.get('source_coords', (0, 0))
         max_iter = 50
         lat, lon = source_coords
@@ -383,7 +402,7 @@ def gensizer():
         psol_unit = [0.0, 0.0, 0.0, 7.0, 74.0, 190.0, 345.00000000000006, 498.0, 594.0, 657.0, 611.0, 548.0, 459.0, 298.0, 134.0, 25.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,] * 365
 
         # Instantiate GenSizer with input variables
-        gen_sizer = GenSizer(swarm_size, pdem, psol_unit,
+        gen_sizer = GenSizer(swarm_size, power_demand, psol_unit,
                              sol_cost, batt_cost, gen_cost, fuel_cost,
                              batt_Wh_max_unit, batt_Wh_min_unit,
                              gen_max_power_out, gen_fuel_req,

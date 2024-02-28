@@ -1,15 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>GridMaster</title>
-  <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GridMaster</title>
+    <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    input[type="number"] {
+      width: 10px; /* Set the width of input fields */
+    }
   <style>
     body, html {
       height: 100%;
       margin: 0;
       font-family: 'Didact Gothic', sans-serif;
-      overflow: hidden;
       position: relative;
       box-sizing: border-box;
     }
@@ -21,6 +26,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      overflow-y: auto;
     }
     #background {
       position: fixed;
@@ -43,6 +49,7 @@
       align-items: center;
       width: 100%;
       position: relative;
+      overflow-y: auto;
     }
 
     .content-main {
@@ -51,7 +58,7 @@
       padding: 20px;
       width: 83%;
       display: flex;
-      height: 63vh;
+      overflow-y: auto;
       justify-content: center;
       align-items: center;
       flex-direction: column;
@@ -219,21 +226,20 @@
 
     </style>
 </head>
-<body>
-<a href="{{ url_for('welcome') }}">
-  <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
-</a>
-  <div id="background"></div>
-  <div class="page-container">
-      <button id="sidebar-button">&#9776;</button>
-    <button id="close-button" style="display: none;">&#10006;</button>
-    <div id="sidebar" class="sidebar">
-    <a href="https://github.com/finmuir/powergen-py">GitHub</a>
-    <a href="#">About Us</a>
-    <a href="#">Contact</a>
-</div>
-    <div class="content">
-      <div class="content-main">
+ <a href="{{ url_for('welcome') }}">
+        <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
+    </a>
+    <div id="background"></div>
+    <div class="page-container">
+        <button id="sidebar-button">&#9776;</button>
+        <button id="close-button" style="display: none;">&#10006;</button>
+        <div id="sidebar" class="sidebar">
+            <a href="https://github.com/finmuir/powergen-py">GitHub</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact</a>
+        </div>
+        <div class="content">
+            <div class="content-main">
         <h2>Generation Sizer Parameters</h2>
         <form action="/genoutputs" method="post">
           <div class="row">
@@ -296,10 +302,7 @@
                 <label for="pvsystem_loss">PV system Loss:</label>
                 <input type="number" step="0.01" id="pvsystem_loss" name="pvsystem_loss">
               </div>
-              <div class="input-group">
-                <label for="power_demand">hourly power demand:</label>
-                <input type="number" id="power_demand" name="power_demand">
-              </div>
+              <input type="hidden" name="yearly_demand_array" id="yearly_demand_array">
           </div>
           </div>
           <button type="submit" class="submit-button">Submit</button>
@@ -307,35 +310,111 @@
         </form>
       </div>
       </div>
-    </div>
-  </div>
-<div class = "content-small">
-<p class="welcome-text">3. GridMaster next needs to know some information about the equipment you're using. This will help the algorithm to provide additional data that will help with your implementation! </p>
-  <script>
-  document.getElementById('sidebar-button').onclick = function() {
-    var sidebar = document.getElementById('sidebar');
-    if (sidebar.style.display === "" || sidebar.style.display === 'none') {
-      sidebar.style.display = 'block';
-    } else {
-      sidebar.style.display = 'none';
+     </div>
+            <div id="graph-container"></div>
+            <div style="flex: 1;">
+                <h3>Hourly Power Demand</h3>
+                <form id="power-demand-form">
+                    <div id="input-fields" style="display: grid; grid-template-columns: repeat(6, 1fr); grid-gap: 10px;"></div>
+                    <button type="submit">Update</button>
+                </form>
+            </div>
+        </div>
+        <div class="content-small">
+            <p class="welcome-text">3. GridMaster next needs to know some information about the equipment you're using. This will help the algorithm to provide additional data that will help with your implementation!</p>
+        </div>
+<script>
+
+      var hours = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24];
+    var average_demand = [200, 180, 170, 160, 150, 160, 170, 180, 200, 220, 240, 260, 270, 280, 290, 300, 310, 320, 330, 340, 330, 320, 300, 280];
+
+    var trace = {
+        x: hours,
+        y: average_demand,
+        mode: 'markers+lines',
+        type: 'scatter',
+        name: 'Average Demand'
+    };
+
+    var layout = {
+        title: 'Average Power Demand Over the Day',
+        xaxis: {
+            title: 'Hour of the Day'
+        },
+        yaxis: {
+            title: 'Power Demand (W)',
+            fixedrange: false // Allow y-axis to be draggable
+        },
+        dragmode: 'y' // Allow dragging only in the y-direction
+    };
+
+    var config = {
+        responsive: true
+    };
+
+    Plotly.newPlot('graph-container', [trace], layout, config);
+
+    var inputFields = document.getElementById('input-fields');
+    for (var i = 0; i < 24; i++) {
+        var label = document.createElement('label');
+        label.textContent = 'Hour ' + i + ':';
+        var input = document.createElement('input');
+        input.type = 'number';
+        input.min = 0;
+        input.value = average_demand[i]; // Initial value
+        input.name = 'power_demand_hour_' + i;
+        input.style.width = '50px'; // Set the width of the input field
+        inputFields.appendChild(label);
+        inputFields.appendChild(input);
+        inputFields.appendChild(document.createElement('br'));
     }
-  }
 
-  var sidebarButton = document.getElementById('sidebar-button');
-  var closeButton = document.getElementById('close-button');
-  var sidebar = document.getElementById('sidebar');
+    // Event listener for form submission
+    document.getElementById('power-demand-form').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent default form submission
 
-  sidebarButton.onclick = function() {
-    sidebar.style.display = 'block';
-    sidebarButton.style.display = 'none';
-    closeButton.style.display = 'block';
-  }
+        // Extract updated power demand values from input fields
+        var updated_demand = [];
+        for (var i = 0; i < 24; i++) {
+            var inputName = 'power_demand_hour_' + i;
+            var inputValue = parseFloat(document.getElementsByName(inputName)[0].value);
+            updated_demand.push(inputValue);
+        }
 
-  closeButton.onclick = function() {
-    sidebar.style.display = 'none';
-    closeButton.style.display = 'none';
-    sidebarButton.style.display = 'block';
-  }
+        // Update the trace with the new data
+        trace.y = updated_demand;
+        Plotly.newPlot('graph-container', [trace], layout, config);
+    });
+
+ // Extract updated power demand values from input fields
+var updated_demand = [];
+for (var i = 0; i < 24; i++) {
+    var inputName = 'power_demand_hour_' + i;
+    var inputValue = parseFloat(document.getElementsByName(inputName)[0].value);
+    updated_demand.push(inputValue);
+}
+
+// Set the value of the hidden input field with the 24-hour demand array
+document.getElementById('yearly_demand_array').value = JSON.stringify(updated_demand);
+
+// Log the array for debugging
+console.log(updated_demand);
+
+    var sidebarButton = document.getElementById('sidebar-button');
+    var closeButton = document.getElementById('close-button');
+    var sidebar = document.getElementById('sidebar');
+
+    sidebarButton.onclick = function() {
+        sidebar.style.display = 'block';
+        sidebarButton.style.display = 'none';
+        closeButton.style.display = 'block';
+    };
+
+    closeButton.onclick = function() {
+        sidebar.style.display = 'none';
+        closeButton.style.display = 'none';
+        sidebarButton.style.display = 'block';
+    };
 </script>
 </body>
 </html>

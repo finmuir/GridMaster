@@ -14,6 +14,7 @@ import requests
 import json
 import pandas as pd
 
+
 class PVOutput:
     def __init__(self, lat, long, capacity, year, auto_dataset=True,dataset='merra2', pvsystem_loss=0,
                  auto_tilt=True, tilt=40, azim=180):
@@ -103,7 +104,11 @@ class PVOutput:
         r = s.get(url, params=args)
         parsed_response = json.loads(r.text)
         data = pd.read_json(json.dumps(parsed_response), orient='index')
+
+
+
         output=[p_out * 1000 for p_out in data["electricity"].values.tolist()]
+        print(output)
 
         return output
 
@@ -150,4 +155,13 @@ class PVOutput:
             return "merra2"
 
 
+# #Example usage
+# latitude = -14.24580667  # Latitude of Mthembanji source
+# longitude = 34.60600833  # Longitude of Mthembanji source
+# panel_capacity = 5000  # Capacity of PV panel in Watts
+# year = 2022
+# #Year of data(most up to date year)
+# pv_subsystem = PVOutput(latitude, longitude, panel_capacity, year=year)
+# output = pv_subsystem.pv_output()
+# psol_unit = output     # Example: Hourly power provided by a single PV panel (come from pv output)
 

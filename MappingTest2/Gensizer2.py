@@ -61,7 +61,7 @@ class Particle:
         self.Ebatt = [0] * (array_len + 1)  # to avoid overshooting
 
         # random x, y, z coordinates
-        self.pos = [random.randint(100, 200), random.randint(100, 200), random.randint(100, 200)]
+        self.pos = [random.randint(50, 500), random.randint(50, 500), random.randint(50, 500)]
 
         # initial velocity is zero in all directions
         self.vel = [0, 0, 0]
@@ -361,7 +361,7 @@ class GenSizer:
             p.gbest_pos = gbest_pos  # .copy()
             p.gbest_value = gbest
 
-    def _update_vel_all(self, current_iter):
+    def _update_vel_all(self, current_iter,max_iter):
         """
         Updates velocity for all particles in swarm.
 
@@ -388,26 +388,43 @@ class GenSizer:
             #      + 0.4)
 
             # PARA DOWN
-            w = 0.9 - 0.5 * (current_iter ** 2 / self.max_iter ** 2)
+            #w = 0.9 - 0.5 * (current_iter ** 2 / self.max_iter ** 2)
 
             # LIENAR C1 & C2
             # c1 = -3*(current_iter / self.max_iter) + 3.5
             # c2 = 3*(current_iter / self.max_iter) + 0.5
 
-            c1 = 2.05  # particle's self confidence
-            c2 = 2.05  # particle's conformity
+            #c1 = 2.05  # particle's self confidence
+            #c2 = 2.05  # particle's conformity
+
+            if current_iter < max_iter * 0.25:  # Initial exploration phase
+                w = 0.9
+                c1 = 1.0
+                c2 = 1.0
+            elif current_iter < max_iter * 0.5:  # Personal best phase
+                w = 0.5
+                c1 = 2.5
+                c2 = 1.0
+            else:  # Global best phase
+                w = 0.1
+                c1 = 1.0
+                c2 = 2.5
             r1 = random.random()
             r2 = random.random()
+            r3 = random.random()
+            r4 = random.random()
+            r5 = random.random()
+            r6 = random.random()
 
             pbest = p.pbest_pos.copy()
             gbest = p.gbest_pos.copy()
 
             p.vel[0] = math.floor(w * p.vel[0] + c1 * r1 * (pbest[0] - p.pos[0])
                                   + c2 * r2 * (gbest[0] - p.pos[0]))
-            p.vel[1] = math.floor(w * p.vel[1] + c1 * r1 * (pbest[1] - p.pos[1])
-                                  + c2 * r2 * (gbest[1] - p.pos[1]))
-            p.vel[2] = math.floor(w * p.vel[2] + c1 * r1 * (pbest[2] - p.pos[2])
-                                  + c2 * r2 * (gbest[2] - p.pos[2]))
+            p.vel[1] = math.floor(w * p.vel[1] + c1 * r3 * (pbest[1] - p.pos[1])
+                                  + c2 * r4 * (gbest[1] - p.pos[1]))
+            p.vel[2] = math.floor(w * p.vel[2] + c1 * r5 * (pbest[2] - p.pos[2])
+                                  + c2 * r6 * (gbest[2] - p.pos[2]))
 
 
     def _check_converge(self):
@@ -545,7 +562,7 @@ class GenSizer:
             self._test_constraints()
             self._reset_invalid()
             self._fitness_all()
-            self._update_vel_all(i)  # iter number passed to adjust inertia
+            self._update_vel_all(i,max_iter)  # iter number passed to adjust inertia
             self._check_converge()
             i=i+1
 
@@ -562,8 +579,8 @@ class GenSizer:
         Cost = round(self.swarm[0].cost, 2)
         autonomDays = round(self.swarm[0].autonomDays, 2)
 
-        t = [x for x in range(72)]
-        xmax = 72
+        t = [x for x in range(8760)]
+        xmax = 8760
 
         power_demand = self.Pdem
         power_battery_discharge = self.power_discharge
@@ -635,20 +652,21 @@ class GenSizer:
         return Num_solar, num_batteries, num_generator, fuel_used, Cost, autonomDays, plot_file_supply_demand, plot_file_battery_energy
 
 
+
 #
 # # #Placeholder values, replace with actual data need research to find real values and take values from network dessigner
-# swarm_size = 10
-# power_demand=[12500]*8760
+# swarm_size = 80
+# #power_demand=[12500]*8760
 #
-# #power_demand = [10000, 10000, 100000, 100000, 100000, 100000, 100000, 400000, 600000, 600000, 600000, 800000, 800000, 800000, 800000,
-# #800000, 800000, 800000, 1000000, 1000000, 1000000, 1000000, 600000, 300000] * 365  # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
+# power_demand = [10000, 10000, 100000, 100000, 100000, 100000, 100000, 400000, 600000, 600000, 600000, 800000, 800000, 800000, 800000,
+# 800000, 800000, 800000, 1000000, 1000000, 1000000, 1000000, 600000, 300000] * 365  # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
 # sol_cost = 5000            # Example: Cost of a single PV panel(input)
-# batt_cost = 10000               # Example: Cost of a single battery(input or prereq)
+# batt_cost = 1000               # Example: Cost of a single battery(input or prereq)
 # gen_cost =  100000              # Example: Cost of a single diesel generator()
 # fuel_cost = 1.5                # Example: Cost of fuel per liter (can change so probably input eg if fuel is hard to import or bought in bulk)
 # batt_Wh_max_unit = 10000       # Example: Battery maximum Wh capacity(input depeneds on battery)
 # batt_Wh_min_unit = 1000        # Example: Battery minimum Wh capacity(input depends on battery)
-# gen_max_power_out = 10000      # Example: Maximum power output of a generator()
+# gen_max_power_out = 40000      # Example: Maximum power output of a generator()
 # gen_fuel_req = 10              # Example: Fuel requirement per hour of generation(depends on generator input)
 # max_off_hours = 24             # Example: Maximum hours the grid can be offline(limit set by user)
 # min_autonomy_days = 0.25         # Example: Minimum number of autonomy days required()
@@ -656,7 +674,7 @@ class GenSizer:
 # #Example usage
 # latitude = -14.24580667  # Latitude of Mthembanji source
 # longitude = 34.60600833  # Longitude of Mthembanji source
-# panel_capacity = 1500  # Capacity of PV panel in Watts
+# panel_capacity = 5000  # Capacity of PV panel in Watts
 # year = 2022
 # # Year of data(most up to date year)
 #
@@ -671,6 +689,10 @@ class GenSizer:
 #                     batt_Wh_max_unit, batt_Wh_min_unit,
 #                     gen_max_power_out, gen_fuel_req,
 #                     max_off_hours, min_autonomy_days)
+#
+# gen_sizer.load_profiles()
+#
+#
 #
 # #Perform optimization
 # max_iter = 50  # Example: Maximum number of iterations

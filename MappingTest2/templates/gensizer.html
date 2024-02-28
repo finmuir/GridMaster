@@ -9,7 +9,6 @@
       height: 100%;
       margin: 0;
       font-family: 'Didact Gothic', sans-serif;
-      overflow: hidden;
       position: relative;
       box-sizing: border-box;
     }
@@ -18,8 +17,7 @@
       height: 100%;
       box-sizing: border-box;
       display: flex;
-      flex-direction: row;
-      justify-content: space-between;
+      flex-direction: column; /* Changed from row to column */
     }
     #background {
       position: fixed;
@@ -36,52 +34,30 @@
     }
 
     .content {
-      display: flex;
-      flex-direction: column;
-      width: 63%;
-      position: relative;
-    }
-
-    .content-main {
-      background-color: rgba(248, 248, 248, 0.8);
-      border-radius: 10px;
-      padding: 10px;
+      flex: 1; /* Grow to fill remaining space */
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
-      border: 1px solid white;
-      z-index: 2;
-      margin-bottom: 20px;
-      width: 100%;
     }
 
-    .content-small {
-      background-color: rgba(248, 248, 248, 0.8);
-      border-radius: 10px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      border: 1px solid white;
+    .graph-container {
+      width: 80%; /* Adjust width as needed */
       margin-bottom: 20px;
-      z-index: 2;
-      width: 100%;
     }
 
-    .extra {
+    .graph-container img {
+      width: 80%;
+      height: auto;
+    }
+
+    .optimization-results {
+      width: 50%;
+      padding: 10px;
+      text-align: left;
       background-color: rgba(248, 248, 248, 0.8);
       border-radius: 10px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
       border: 1px solid white;
-      margin-bottom: 20px;
-      z-index: 2;
-      width: 100%;
     }
 
     h2 {
@@ -89,6 +65,7 @@
     }
 
     #sidebar {
+      overflow-y: auto; /* Add scroll functionality if needed */
       position: fixed;
       padding-top: 70px;
       right: 20px;
@@ -126,10 +103,7 @@
     }
 
     .submit-button {
-  position: absolute; /* Absolute positioning */
-  bottom: 0.5%;
-  right: -17%;
-  padding: 1.2% 1.2%;
+  padding: 10px 20px; /* Adjust as needed */
   background-color: #4CAF50;
   color: white;
   border: none;
@@ -137,47 +111,7 @@
   cursor: pointer;
   font-size: 16px;
   text-decoration: none;
-  z-index: 2;
-
-    .graph-container {
-      flex: 1;
-      margin-right: 10px;
-      width: 50%;
-    }
-
-    .graph-container:last-child {
-      margin-right: 0;
-    }
-
-    .graph-container img {
-      max-width: 100%;
-      max-height: 100%;
-    }
-
-    .optimization-results {
-      width: 100%;
-      padding: 10px;
-      text-align: left;
-    }
-
-    .optimization-results p {
-      margin: 5px 0;
-    }
-
-    .extra {
-      background-color: rgba(248, 248, 248, 0.8);
-      border-radius: 10px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      border: 1px solid white;
-      margin-bottom: 20px;
-      z-index: 2;
-      width: 100%;
-    }
-
+}
   </style>
 </head>
 <body>
@@ -193,34 +127,72 @@
         <a href="#">Contact</a>
     </div>
     <div class="content">
-        <div class="content-small">
-            <h2>Graphs</h2>
-            <!-- Display the graphs -->
-            <div class="graphs" style="display: flex;">
-                <div class="graph-container">
-                    <iframe src="/static/plots/power_supply_demand.html" width="100%" height="400px" frameborder="0"></iframe>
-                </div>
-                <div class="graph-container">
-                         <iframe src="/static/plots/battery_energy.html" width="100%" height="400px" frameborder="0"></iframe>
-                </div>
-            </div>
+        <div class="graph-container">
+            <iframe src="/static/plots/power_supply_demand.html" width="100%" height="400px" frameborder="0"></iframe>
         </div>
-        <div class="content-main">
+        <!-- Add buttons here -->
+        <button id="toggle-solar">Toggle Solar</button>
+        <button id="toggle-battery-discharge">Toggle Battery Discharge</button>
+        <button id="toggle-battery-charge">Toggle Battery Charge</button>
+        <button id="toggle-power-demand">Toggle Power Demand</button>
+        <button id="toggle-generator-power">Toggle Generator Power</button>
+        <label for="time-frame">Select Time Frame:</label>
+        <input type="number" id="time-frame" min="0" max="23" step="1" value="0">
+        <button id="update-graph">Update Graph</button>
+        <div class="graph-container">
+            <iframe src="/static/plots/battery_energy.html" width="100%" height="400px" frameborder="0"></iframe>
+        </div>
+        <div class="optimization-results">
             <h2>Optimization Results</h2>
-            <!-- Display the optimization results -->
-            <div class="optimization-results">
-                <p>Number of Solar Panels: {{ solar }}</p>
-                <p>Number of Batteries: {{ batteries }}</p>
-                <p>Number of Generators: {{ generators }}</p>
-                <p>Fuel Used: {{ fuel_used }}</p>
-                <p>Total Cost: {{ total_cost }}</p>
-                <p>Autonomy Days: {{ autonomy_days }}</p>
-
-        </div>
+            <p>Number of Solar Panels: {{ solar }}</p>
+            <p>Number of Batteries: {{ batteries }}</p>
+            <p>Number of Generators: {{ generators }}</p>
+            <p>Fuel Used: {{ fuel_used }}</p>
+            <p>Total Cost: {{ cost }}</p>
+            <p>Autonomy Days: {{ autonomy_days }}</p>
             <form method="get" action="{{ url_for('billofquantities') }}">
-                <input type="submit" value="Implementation Data" class = "submit-button">
+                <input type="submit" value="Implementation Data" class="submit-button">
             </form>
         </div>
     </div>
 </div>
 <script>
+  document.addEventListener("DOMContentLoaded", function() {
+    var toggleSolar = document.getElementById("toggle-solar");
+    var toggleBatteryDischarge = document.getElementById("toggle-battery-discharge");
+    var toggleBatteryCharge = document.getElementById("toggle-battery-charge");
+    var togglePowerDemand = document.getElementById("toggle-power-demand");
+    var toggleGeneratorPower = document.getElementById("toggle-generator-power");
+    var timeFrameInput = document.getElementById("time-frame");
+    var updateGraphButton = document.getElementById("update-graph");
+
+    // Add event listeners to toggle visibility of traces
+    toggleSolar.addEventListener("click", function() {
+      // Toggle visibility of solar trace
+    });
+
+    toggleBatteryDischarge.addEventListener("click", function() {
+      // Toggle visibility of battery discharge trace
+    });
+
+    toggleBatteryCharge.addEventListener("click", function() {
+      // Toggle visibility of battery charge trace
+    });
+
+    togglePowerDemand.addEventListener("click", function() {
+      // Toggle visibility of power demand trace
+    });
+
+    toggleGeneratorPower.addEventListener("click", function() {
+      // Toggle visibility of generator power trace
+    });
+
+    // Add event listener to update graph based on selected time frame
+    updateGraphButton.addEventListener("click", function() {
+      var selectedTimeFrame = parseInt(timeFrameInput.value);
+      // Update graph based on selected time frame
+    });
+  });
+</script>
+</body>
+</html>
