@@ -155,6 +155,7 @@ def plot_data():
         session['max_voltage_drop'] = max_voltage_drop = float(form_data.get('max_voltage_drop'))
         session['max_customers'] = max_customers = int(form_data.get('max_customers'))
         session['distance_threshold'] = distance_threshold = int(form_data.get('distance_threshold'))
+        session['labor_cost'] = labor_cost = float(form_data.get('labor_cost'))
 
     except TypeError:
         flash("One or more of the input values are missing. Please check your inputs.")
@@ -337,7 +338,8 @@ def plot_data_network():
         for customer in cluster.customers:
             customer_position = customer.position
             code += f"L.polyline([[{pole_position[1]}, {pole_position[0]}], [{customer_position[1]}, {customer_position[0]}]], {{color: '#4a2900'}}).addTo(map);\n"
-
+    session['number_of_poles'] = request.form.get('number_of_poles', type=int)
+    session['t_poles'] = int(request.form.get('t_poles', 0))
     return render_template('networkdesignresult.html', code=code, source_coords=clusterer.source_coord)
 
 
@@ -440,34 +442,49 @@ def download_boq():
     )
 @app.route('/billofquantities', methods=['GET', 'POST'])
 def billofquantities():
-    quantities_and_costs = {
-        "Nine Metre Poles": (36, 10, 100, 2),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "LV Insulators": (36, 20, 50, 1.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "Bobbin Insulators": (144, 5, 30, 0.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "Stay Blocks": (48, 8, 40, 1),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "D Irons": (72, 15, 60, 1.5),  # Quantity, Unit Cost ($), Labor Rate($), Installation Time (hrs)
-        "Four-way Boards": (36, 12, 50, 2),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "50mm ACC Conductor": (6000, 2, 80, 10),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "16mm Twin Figure 8": (1000, 3, 90, 5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "2x16mm Armored Cable": (80, 5, 70, 4),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "PG Clamp AL/AL": (150, 1, 20, 1.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "PG Clamp AL/CU": (150, 1, 20, 1.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-        "Earth Rod": (36, 4, 50, 2.5),  # Quantity, Unit Cost ($), Labor Rate ($), Installation Time (hrs)
-    }
+    if request.method == 'POST':
+        # Get T-Poles from the form, defaulting to 0 if not provided
+        t_poles = int(request.form.get('t_poles', 0))
+        labor_cost = float(request.form.get('labor_cost', 20))  # Default labor cost
+        pole_cost = float(request.form.get('pole_cost', 10))  # Get pole cost from form
 
-    # Create an instance of the BillOfQuantities with the quantities and costs
-    boq = BillOfQuantities(quantities_and_costs)
+        number_of_poles = session.get('number_of_poles', 0)  # Number of poles from session
+        if number_of_poles <= 0:
+            flash("Number of poles not found. Please restart the process.")
+            return redirect(url_for('cluster_inputs'))
 
-    # Generate the bill of quantities
-    bill_of_quantities = boq.generate_bill_of_quantities()
+        # Define quantities and costs including the dynamic calculation for Bobbin Insulators
+        quantities_and_costs = {
+            "Nine Metre Poles": (number_of_poles, pole_cost, 2),
+            "LV Insulators": (number_of_poles, 20, 1.5),
+            # Bobbin Insulators calculation now uses t_poles directly
+            "Bobbin Insulators": ((2 * number_of_poles) + (2 * t_poles), 5, 0.5),
+            "Stay Blocks": (2 * number_of_poles, 8, 1),
+            "D Irons": (4 * number_of_poles, 15, 1.5),
+            "Four-way Boards": (number_of_poles, 12, 2),
+            "50mm ACC Conductor": (6000, 2, 10),
+            "16mm Twin Figure 8": (1000, 3, 5),
+            "2x16mm Armored Cable": (80, 5, 4),
+            "PG Clamp AL/AL": (max(1, number_of_poles // 2), 1, 1.5),
+            "PG Clamp AL/CU": (max(1, number_of_poles // 2), 1, 1.5),
+            "Earth Rod": (number_of_poles, 4, 2.5),
+        }
 
-    # Calculate total cost
-    total_cost = sum(details['Total Cost'] for details in bill_of_quantities.values())
+        # Instantiate the BillOfQuantities with the updated quantities and costs
+        boq = BillOfQuantities(quantities_and_costs, labor_cost)
+        bill_of_quantities = boq.generate_bill_of_quantities()
+        total_cost = sum(item['Total Cost'] for item in bill_of_quantities.values())
+        customer_cost = total_cost / (session.get('number_of_customers', 1))
 
-    # Calculate cost per customer (assuming 61 customers)
-    customer_cost = total_cost / 61
 
-    return render_template('bill_of_quantities.html', bill_of_quantities=bill_of_quantities, total_cost=total_cost, customer_cost=customer_cost)
+
+
+    # Render the BOQ template with the calculated values
+    return render_template('bill_of_quantities.html', bill_of_quantities=bill_of_quantities, total_cost=total_cost,
+                           customer_cost=customer_cost)
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
