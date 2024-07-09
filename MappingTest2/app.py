@@ -155,7 +155,7 @@ def plot_data():
         session['max_voltage_drop'] = max_voltage_drop = float(form_data.get('max_voltage_drop'))
         session['max_customers'] = max_customers = int(form_data.get('max_customers'))
         session['distance_threshold'] = distance_threshold = int(form_data.get('distance_threshold'))
-        session['labor_cost'] = labor_cost = float(form_data.get('labor_cost'))
+        #session['labor_cost'] = labor_cost = float(form_data.get('labor_cost'))
 
     except TypeError:
         flash("One or more of the input values are missing. Please check your inputs.")
@@ -372,58 +372,73 @@ def gensizer():
             pvsystem_loss = float(request.form.get('pvsystem_loss', 1))
             day_demand = json.loads(request.form.get('yearly_demand_array', '[]'))
             power_demand = []
+            number_of_customers = (session.get('number_of_customers', 1))
 
             # Append the 24-hour demand array to power_demand 365 times
-            # Multiply each value in the day_demand array by 61
-            modified_demand = [value * 61 for value in day_demand]
+            # Multiply each value in the day_demand array by number of customers (currently fixed value)
+            modified_demand = [value * number_of_customers for value in day_demand]
 
-            # Duplicate the modified_demand array for the full year (8760 hours)
+            #  full year power demand (length 8760 hours)
             power_demand = modified_demand * 365
 
             print("Yearly Demand Array Length:", len(power_demand))
 
             print("Yearly Demand Array:", power_demand)
-            print(len(power_demand))
+
         except KeyError as e:
             return f"Missing form field: {e}"
         except ValueError as e:
             return f"Invalid value for form field: {e}"
 
-        #pdem = [power_demand] * 8760
+
         source_coords = session.get('source_coords', (0, 0))
-        max_iter = 50
+        max_iter = 200
         lat, lon = source_coords
         year = 2023
 
-        # pv_subsystem = PVOutput(lat, lon, panel_capacity, year=year)
-        # psol_unit = pv_subsystem.pv_output()
-        # # Hourly power provided by a single PV panel (come from pv output)
-        # print(psol_unit)
+
+        #issues with integrating PVOutput
+
+
+        pv_subsystem = PVOutput(lat, lon, panel_capacity, year=year)
+        psol_unit = pv_subsystem.pv_output()
+        # Hourly power provided by a single PV panel (come from pv output)
+        print(psol_unit)
+
+
 
         #Generate example PV output
-        psol_unit = [0.0, 0.0, 0.0, 7.0, 74.0, 190.0, 345.00000000000006, 498.0, 594.0, 657.0, 611.0, 548.0, 459.0, 298.0, 134.0, 25.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,] * 365
+        #psol_unit = [0.0, 0.0, 0.0, 7.0, 74.0, 190.0, 345.00000000000006, 498.0, 594.0, 657.0, 611.0, 548.0, 459.0, 298.0, 134.0, 25.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,] * 365
 
-        # Instantiate GenSizer with input variables
+        # Instantiate GenSizer
         gen_sizer = GenSizer(swarm_size, power_demand, psol_unit,
                              sol_cost, batt_cost, gen_cost, fuel_cost,
                              batt_Wh_max_unit, batt_Wh_min_unit,
                              gen_max_power_out, gen_fuel_req,
                              max_off_hours, min_autonomy_days)
+        #run optimise function
         gen_sizer.optimise(max_iter)
 
-        # Get data from GenSizer
-        solar, batteries, generators, fuel_used, cost, autonomy_days, power_supply_demand_graph, battery_energy_graph = gen_sizer.plot_graphs()
+        # Get data from GenSizer plot graph function
+        solar, batteries, generators, fuel_used, cost, autonomy_days,power_demand,power_battery_discharge,power_battery_charge,power_generator,power_solar ,EbattMin,EbattMax ,dumped_energy, batt_energy= gen_sizer.plot_graphs()
 
-        # Render the template with the data
+        print('dumped ' , dumped_energy)
+        print(len(dumped_energy))
+
         return render_template('gensizer.html', solar=solar, batteries=batteries, generators=generators,
                                fuel_used=fuel_used, cost=cost, autonomy_days=autonomy_days,
-                               power_supply_demand_graph=power_supply_demand_graph,
-                               battery_energy_graph=battery_energy_graph)
-
-
+                               power_demand=power_demand,
+                               power_battery_discharge =power_battery_discharge,
+                               power_battery_charge=power_battery_charge,
+                               power_generator=power_generator,
+                               power_solar=power_solar,
+                               EbattMin=EbattMin,
+                               EbattMax=EbattMax ,
+                               dumped_energy=dumped_energy,
+                               batt_energy=batt_energy)
 @app.route('/download-boq')
 def download_boq():
-    data = BillOfQuantities.generate_bill_of_quantities()  # Assuming this function returns your bill of quantities data as a dictionary
+    data = BillOfQuantities.generate_bill_of_quantities()
     proxy = io.StringIO()
 
     writer = csv.writer(proxy)
@@ -462,9 +477,9 @@ def billofquantities():
             "Stay Blocks": (2 * number_of_poles, 8, 1),
             "D Irons": (4 * number_of_poles, 15, 1.5),
             "Four-way Boards": (number_of_poles, 12, 2),
-            "50mm ACC Conductor": (6000, 2, 10),
-            "16mm Twin Figure 8": (1000, 3, 5),
-            "2x16mm Armored Cable": (80, 5, 4),
+            "50mm ACC Conductor": (6000, 2, 10),#needs distances
+            "16mm Twin Figure 8": (1000, 3, 5),#needs distances
+            "2x16mm Armored Cable": (80, 5, 4),#needs distances
             "PG Clamp AL/AL": (max(1, number_of_poles // 2), 1, 1.5),
             "PG Clamp AL/CU": (max(1, number_of_poles // 2), 1, 1.5),
             "Earth Rod": (number_of_poles, 4, 2.5),
@@ -472,7 +487,9 @@ def billofquantities():
 
         # Instantiate the BillOfQuantities with the updated quantities and costs
         boq = BillOfQuantities(quantities_and_costs, labor_cost)
-        bill_of_quantities = boq.generate_bill_of_quantities()
+
+        bill_of_quantities =boq.generate_bill_of_quantities()
+
         total_cost = sum(item['Total Cost'] for item in bill_of_quantities.values())
         customer_cost = total_cost / (session.get('number_of_customers', 1))
 

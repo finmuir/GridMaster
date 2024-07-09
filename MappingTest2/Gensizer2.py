@@ -12,9 +12,6 @@
 
 import random
 import math
-import matplotlib.pyplot as plt
-import numpy as np
-import os
 from PVoutput2 import PVOutput
 
 import os
@@ -60,7 +57,7 @@ class Particle:
         self.Pgen = [0] * array_len
         self.Ebatt = [0] * (array_len + 1)  # to avoid overshooting
 
-        # random x, y, z coordinates
+        # random x, y, z coordinates - changed to have at least 50 of each component to ensure it always runs
         self.pos = [random.randint(50, 500), random.randint(50, 500), random.randint(50, 500)]
 
         # initial velocity is zero in all directions
@@ -380,35 +377,13 @@ class GenSizer:
             # c1 self confidence, c2 social conformity
             # r1, r2 random factors
 
-            # LINEAR
-            # w = 0.5*(self.max_iter - current_iter)/(self.max_iter) + 0.4
 
-            # PARA UP
-            # w = (0.5 * ((current_iter - self.max_iter)**2 / self.max_iter**2)
-            #      + 0.4)
+            w = 0.5*(self.max_iter - current_iter)/(self.max_iter) + 0.4 #inertia allows for high exploration at the start of pso
 
-            # PARA DOWN
-            #w = 0.9 - 0.5 * (current_iter ** 2 / self.max_iter ** 2)
+            c1 = 2.05  # particle's self confidence
+            c2 = 2.05  # particle's conformity
 
-            # LIENAR C1 & C2
-            # c1 = -3*(current_iter / self.max_iter) + 3.5
-            # c2 = 3*(current_iter / self.max_iter) + 0.5
 
-            #c1 = 2.05  # particle's self confidence
-            #c2 = 2.05  # particle's conformity
-
-            if current_iter < max_iter * 0.25:  # Initial exploration phase
-                w = 0.9
-                c1 = 1.0
-                c2 = 1.0
-            elif current_iter < max_iter * 0.5:  # Personal best phase
-                w = 0.5
-                c1 = 2.5
-                c2 = 1.0
-            else:  # Global best phase
-                w = 0.1
-                c1 = 1.0
-                c2 = 2.5
             r1 = random.random()
             r2 = random.random()
             r3 = random.random()
@@ -450,11 +425,12 @@ class GenSizer:
         del positions
 
     def battery_power(self):
-        pdischarge = [0] * 8760  # Initialize pdischarge with 8760 zeros
-        pcharge = [0] * 8760  # Initialize pcharge with 8760 zeros
-        energy_difference=[0] * 8760
+        discharge = [0] * 8760
+        charge = [0] * 8760
+        energy_difference = [0] * 8760
+        dump = [0] * 8760
 
-        # Extracting particle parameters
+        #  particle parameters
         Ns = self.swarm[0].pos[0]
         Nb = self.swarm[0].pos[1]
         Ng = self.swarm[0].pos[2]
@@ -474,43 +450,41 @@ class GenSizer:
                 Ebatt.append(Ebatt[-1])  # Maintain the same battery energy
             # Solar power exceeds demand, charge batteries
             elif Psol[t] > self.Pdem[t]:
-                pcharge[t] = Psol[t] - self.Pdem[t]
+                charge[t] = Psol[t] - self.Pdem[t]
                 # Energy charge exceeds max capacity, dump excess energy
-                if (Ebatt[t] + pcharge[t]) > EbattMax:
+                if (Ebatt[t] + charge[t]) > EbattMax:
+                    dump[t] = (Ebatt[t] + charge[t]) - EbattMax
                     Ebatt.append(EbattMax)
                 else:
-                    Ebatt.append(Ebatt[t] + pcharge[t])
+                    Ebatt.append(Ebatt[t] + charge[t])
             # Solar power below demand
             else:
-                pdischarge[t] = self.Pdem[t] - Psol[t]
+                discharge[t] = self.Pdem[t] - Psol[t]
                 # Battery energy enough to meet demand
-                if (Ebatt[t] - pdischarge[t]) >= EbattMin:
-                    Ebatt.append(Ebatt[t] - pdischarge[t])
+                if (Ebatt[t] - discharge[t]) >= EbattMin:
+                    Ebatt.append(Ebatt[t] - discharge[t])
                 # Battery energy below demand, activate generators
                 else:
-                    pdischarge[t] = Ebatt[t] - EbattMin
-                    pcharge[t] = pdischarge[t] + Psol[t] + Pgen - self.Pdem[t]
-                    Ebatt.append(pcharge[t] + EbattMin)
+                    discharge[t] = Ebatt[t] - EbattMin
+                    charge[t] =   Psol[t] + Pgen - self.Pdem[t]- discharge[t]
+                    Ebatt.append(charge[t] + EbattMin)
+                    dump[t] = (Ebatt[t + 1] - EbattMax) if Ebatt[t + 1] > EbattMax else 0
 
         # Check if battery energy exceeds max capacity
         for t in range(len(self.Pdem)):
-
             if Ebatt[t + 1] > EbattMax:
-                pcharge[t] = EbattMax - Ebatt[t]
+                charge[t] = EbattMax - Ebatt[t]
                 Ebatt[t + 1] = EbattMax
-            energy_difference[t] = pcharge[t] - pdischarge[t]
+            energy_difference[t] = charge[t] - discharge[t]
 
         for t in range(len(self.Pdem)):
             if Nb == 0:
-                pdischarge[t] = 0
-                pcharge[t] = 0
+                discharge[t] = 0
+                charge[t] = 0
 
-
-
-
-
-        self.power_discharge=pdischarge
-        self.power_charge=pcharge
+        self.power_discharge = discharge
+        self.power_charge = charge
+        self.dump_energy = dump
 
 
 
@@ -562,9 +536,9 @@ class GenSizer:
             self._test_constraints()
             self._reset_invalid()
             self._fitness_all()
-            self._update_vel_all(i,max_iter)  # iter number passed to adjust inertia
+            self._update_vel_all(i,max_iter)
             self._check_converge()
-            i=i+1
+            i = i+1
 
 
         self.total_cost = self.swarm[0].cost
@@ -579,95 +553,107 @@ class GenSizer:
         Cost = round(self.swarm[0].cost, 2)
         autonomDays = round(self.swarm[0].autonomDays, 2)
 
-        t = [x for x in range(8760)]
-        xmax = 8760
 
+        # t = [x for x in range(72)]
+        # xmax = 72
+        #
         power_demand = self.Pdem
         power_battery_discharge = self.power_discharge
         power_battery_charge = self.power_charge
         power_generator = self.swarm[0].Pgen
         power_solar = self.swarm[0].Psol
-
-
+        #
+        #
         EbattMin = num_batteries * self.EbattMin_unit
         EbattMax = num_batteries * self.EbattMax_unit
+        dumped_energy = self.dump_energy
+        #
+        # # Create directory if it doesn't exist
+        # os.makedirs('static/plots/', exist_ok=True)
+        #
+        # # Plot power supply and demand against time
+        # fig_supply_demand = go.Figure()
+        # fig_supply_demand.add_trace(
+        #     go.Scatter(x=t, y=power_demand[:len(t)], mode='lines', name='Power Demand', line=dict(color='black')))
+        # fig_supply_demand.add_trace(
+        #     go.Scatter(x=t, y=power_battery_discharge[:len(t)], mode='lines', name='Battery Discharge Power',
+        #                line=dict(color='blue', dash='dash')))
+        # fig_supply_demand.add_trace(
+        #     go.Scatter(x=t, y=power_battery_charge[:len(t)], mode='lines', name='Battery Charge Power',
+        #                line=dict(color='orange', dash='dashdot')))
+        # fig_supply_demand.add_trace(
+        #     go.Scatter(x=t, y=power_generator[:len(t)], mode='lines', name='Power from Generators',
+        #                line=dict(color='red', dash='dashdot')))
+        # fig_supply_demand.add_trace(
+        #     go.Scatter(x=t, y=power_solar[:len(t)], mode='lines', name='Power from Solar Panels',
+        #                line=dict(color='green', dash='dot')))
+        # fig_supply_demand.update_layout(title='Power Supply and Demand vs Time', xaxis_title='Time (h)',
+        #                                 yaxis_title='Power (W)')
+        # plot_file_supply_demand = 'static/plots/power_supply_demand.html'
+        # pio.write_html(fig_supply_demand, file=plot_file_supply_demand, auto_open=False)
+        #
+        # #pio.show(fig_supply_demand)
+        #
+        # # Extract battery energy data from the swarm object
+        battery_energy_data = self.swarm[0].Ebatt[0:8760]
+        #
+        # if num_batteries >= 0:
+        #     # Create a Plotly figure for battery energy
+        #     fig_battery_energy = go.Figure()
+        #     fig_battery_energy.add_trace(
+        #         go.Scatter(x=t, y=battery_energy_data, mode='lines', name='Energy stored', line=dict(color='blue')))
+        #
+        #     # Add horizontal lines for maximum and minimum battery energy levels
+        #     fig_battery_energy.add_shape(type="line", x0=0, y0=EbattMax, x1=xmax, y1=EbattMax,
+        #                                  line=dict(color="green", width=2, dash="dash"), name="Max Battery Energy")
+        #     fig_battery_energy.add_shape(type="line", x0=0, y0=EbattMin, x1=xmax, y1=EbattMin,
+        #                                  line=dict(color="red", width=2, dash="dash"), name="Min Battery Energy")
+        #
+        #     # Update layout of the battery energy plot
+        #     fig_battery_energy.update_layout(title='Battery Energy vs Time', xaxis_title='Time (h)',
+        #                                      yaxis_title='Battery Energy (Wh)')
+        #
+        #     # Create directory if it doesn't exist
+        #     os.makedirs('static/plots/', exist_ok=True)
+        #
+        #     # Write the battery energy figure to an HTML file
+        #     plot_file_battery_energy = 'static/plots/battery_energy.html'
+        #     pio.write_html(fig_battery_energy, file=plot_file_battery_energy, auto_open=False)
+        #
+        #     #pio.show(fig_battery_energy)
+        #
+        #     # Plot dumped energy against time
+        #     fig_dumped_energy = go.Figure()
+        #     fig_dumped_energy.add_trace(go.Scatter(x=t, y=dumped_energy[:len(t)], mode='lines', name='Dumped Energy',
+        #                                            line=dict(color='blue')))
+        #     fig_dumped_energy.update_layout(title='Wasted Energy vs Time', xaxis_title='Time (h)',
+        #                                     yaxis_title='Wasted Energy (Wh)')
+        #     plot_file_dumped_energy = 'static/plots/dumped_energy.html'
+        #     pio.write_html(fig_dumped_energy, file=plot_file_dumped_energy, auto_open=False)
 
-        # Create directory if it doesn't exist
-        os.makedirs('static/plots/', exist_ok=True)
+            #pio.show(fig_dumped_energy)
 
-        # Plot power supply and demand against time
-        fig_supply_demand = go.Figure()
-        fig_supply_demand.add_trace(
-            go.Scatter(x=t, y=power_demand[:len(t)], mode='lines', name='Power Demand', line=dict(color='black')))
-        fig_supply_demand.add_trace(
-            go.Scatter(x=t, y=power_battery_discharge[:len(t)], mode='lines', name='Battery Discharge Power',
-                       line=dict(color='blue', dash='dash')))
-        fig_supply_demand.add_trace(
-            go.Scatter(x=t, y=power_battery_charge[:len(t)], mode='lines', name='Battery Charge Power',
-                       line=dict(color='orange', dash='dashdot')))
-        fig_supply_demand.add_trace(
-            go.Scatter(x=t, y=power_generator[:len(t)], mode='lines', name='Power from Generators',
-                       line=dict(color='red', dash='dashdot')))
-        fig_supply_demand.add_trace(
-            go.Scatter(x=t, y=power_solar[:len(t)], mode='lines', name='Power from Solar Panels',
-                       line=dict(color='green', dash='dot')))
-        fig_supply_demand.update_layout(title='Power Supply and Demand vs Time', xaxis_title='Time (h)',
-                                        yaxis_title='Power (W)')
-        plot_file_supply_demand = 'static/plots/power_supply_demand.html'
-        pio.write_html(fig_supply_demand, file=plot_file_supply_demand, auto_open=False)
-
-        #pio.show(fig_supply_demand)
-
-        # Extract battery energy data from the swarm object
-        battery_energy_data = self.swarm[0].Ebatt[0:xmax]
-
-        if num_batteries >= 0:
-            # Create a Plotly figure for battery energy
-            fig_battery_energy = go.Figure()
-            fig_battery_energy.add_trace(
-                go.Scatter(x=t, y=battery_energy_data, mode='lines', name='Energy stored', line=dict(color='blue')))
-
-            # Add horizontal lines for maximum and minimum battery energy levels
-            fig_battery_energy.add_shape(type="line", x0=0, y0=EbattMax, x1=xmax, y1=EbattMax,
-                                         line=dict(color="green", width=2, dash="dash"), name="Max Battery Energy")
-            fig_battery_energy.add_shape(type="line", x0=0, y0=EbattMin, x1=xmax, y1=EbattMin,
-                                         line=dict(color="red", width=2, dash="dash"), name="Min Battery Energy")
-
-            # Update layout of the battery energy plot
-            fig_battery_energy.update_layout(title='Battery Energy vs Time', xaxis_title='Time (h)',
-                                             yaxis_title='Battery Energy (Wh)')
-
-            # Create directory if it doesn't exist
-            os.makedirs('static/plots/', exist_ok=True)
-
-            # Write the battery energy figure to an HTML file
-            plot_file_battery_energy = 'static/plots/battery_energy.html'
-            pio.write_html(fig_battery_energy, file=plot_file_battery_energy, auto_open=False)
-
-            #pio.show(fig_battery_energy)
+        return Num_solar, num_batteries, num_generator, fuel_used, Cost, autonomDays,power_demand,power_battery_discharge,power_battery_charge,power_generator,power_solar ,EbattMin,EbattMax ,dumped_energy, battery_energy_data
 
 
 
 
-        return Num_solar, num_batteries, num_generator, fuel_used, Cost, autonomDays, plot_file_supply_demand, plot_file_battery_energy
 
-
-
-#
 # # #Placeholder values, replace with actual data need research to find real values and take values from network dessigner
-# swarm_size = 80
-# #power_demand=[12500]*8760
+# swarm_size = 20
+# # power_demand=[12500]*8760
 #
-# power_demand = [10000, 10000, 100000, 100000, 100000, 100000, 100000, 400000, 600000, 600000, 600000, 800000, 800000, 800000, 800000,
-# 800000, 800000, 800000, 1000000, 1000000, 1000000, 1000000, 600000, 300000] * 365  # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
-# sol_cost = 5000            # Example: Cost of a single PV panel(input)
+# power_demand=[3000,3000,3000,5000,5000,5000,5000,5000,5000,7500,10000,10000,10000,10000,10000,10000,10000,9000,12000,12000,1200,5000,5000]*365
+#
+# # # Example: Hourly power demand for a year(estimate profile of demand eg make a full day profile make sure array is same length as pvoutput 8760 hours also does not account for losses of panel )
+# sol_cost = 1000            # Example: Cost of a single PV panel(input)
 # batt_cost = 1000               # Example: Cost of a single battery(input or prereq)
-# gen_cost =  100000              # Example: Cost of a single diesel generator()
+# gen_cost =  1500              # Example: Cost of a single diesel generator()
 # fuel_cost = 1.5                # Example: Cost of fuel per liter (can change so probably input eg if fuel is hard to import or bought in bulk)
-# batt_Wh_max_unit = 10000       # Example: Battery maximum Wh capacity(input depeneds on battery)
-# batt_Wh_min_unit = 1000        # Example: Battery minimum Wh capacity(input depends on battery)
-# gen_max_power_out = 40000      # Example: Maximum power output of a generator()
-# gen_fuel_req = 10              # Example: Fuel requirement per hour of generation(depends on generator input)
+# batt_Wh_max_unit = 1000       # Example: Battery maximum Wh capacity(input depeneds on battery)
+# batt_Wh_min_unit = 100        # Example: Battery minimum Wh capacity(input depends on battery)
+# gen_max_power_out = 1000      # Example: Maximum power output of a generator()
+# gen_fuel_req = 1              # Example: Fuel requirement per hour of generation(depends on generator input)
 # max_off_hours = 24             # Example: Maximum hours the grid can be offline(limit set by user)
 # min_autonomy_days = 0.25         # Example: Minimum number of autonomy days required()
 #
@@ -690,11 +676,10 @@ class GenSizer:
 #                     gen_max_power_out, gen_fuel_req,
 #                     max_off_hours, min_autonomy_days)
 #
-# gen_sizer.load_profiles()
 #
 #
 #
 # #Perform optimization
-# max_iter = 50  # Example: Maximum number of iterations
+# max_iter = 100  # Example: Maximum number of iterations
 # gen_sizer.optimise(max_iter)
 # gen_sizer.plot_graphs()

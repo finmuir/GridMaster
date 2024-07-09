@@ -296,6 +296,9 @@
 
     <input type="submit" class="submit-button" value="Start Clustering">
 </form>
+          <form method="get" action="{{ url_for('gensizerinputs') }}">
+                <input type="submit" value="Gensizer" class="submit-button">
+            </form>
       </div>
       <div class="content-small">
         <p class="welcome-text">1. GridMaster uses a K-Means clustering algorithm to group customers together and provide them with an electrical pole. Please enter your minigrid data in the following inputs so GridMaster can provide you with the best mini grid design! </p>

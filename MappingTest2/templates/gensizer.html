@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>GridMaster</title>
   <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <style>
     body, html {
       height: 100%;
@@ -17,7 +18,7 @@
       height: 100%;
       box-sizing: border-box;
       display: flex;
-      flex-direction: column; /* Changed from row to column */
+      flex-direction: column;
     }
     #background {
       position: fixed;
@@ -34,7 +35,7 @@
     }
 
     .content {
-      flex: 1; /* Grow to fill remaining space */
+      flex: 1;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -42,7 +43,7 @@
     }
 
     .graph-container {
-      width: 80%; /* Adjust width as needed */
+      width: 80%;
       margin-bottom: 20px;
     }
 
@@ -65,7 +66,7 @@
     }
 
     #sidebar {
-      overflow-y: auto; /* Add scroll functionality if needed */
+      overflow-y: auto;
       position: fixed;
       padding-top: 70px;
       right: 20px;
@@ -103,15 +104,15 @@
     }
 
     .submit-button {
-  padding: 10px 20px; /* Adjust as needed */
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  text-decoration: none;
-}
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -127,21 +128,30 @@
         <a href="#">Contact</a>
     </div>
     <div class="content">
+
         <div class="graph-container">
-            <iframe src="/static/plots/power_supply_demand.html" width="100%" height="400px" frameborder="0"></iframe>
+            <div id="graph_power_time"></div>
         </div>
-        <!-- Add buttons here -->
-        <button id="toggle-solar">Toggle Solar</button>
-        <button id="toggle-battery-discharge">Toggle Battery Discharge</button>
-        <button id="toggle-battery-charge">Toggle Battery Charge</button>
-        <button id="toggle-power-demand">Toggle Power Demand</button>
-        <button id="toggle-generator-power">Toggle Generator Power</button>
+
+        <button id="solar">Solar</button>
+        <button id="battery-discharge">Battery Discharge</button>
+        <button id="battery-charge">Battery Charge</button>
+        <button id="power-demand">Power Demand</button>
+        <button id="generator-power">Generator Power</button>
         <label for="time-frame">Select Time Frame:</label>
-        <input type="number" id="time-frame" min="0" max="23" step="1" value="0">
-        <button id="update-graph">Update Graph</button>
+        <input type="number" id="start-time" min="0" max="8760" step="1" value="0">
+        <input type="number" id="end-time" min="0" max="8760" step="1" value="0">
+        <button id="update-time">Update Time</button>
+
         <div class="graph-container">
-            <iframe src="/static/plots/battery_energy.html" width="100%" height="400px" frameborder="0"></iframe>
+            <div id="batt_energy_graph"></div>
         </div>
+
+        <div class="graph-container">
+            <div id="wasted_energy_graph"></div>
+        </div>
+
+
         <div class="optimization-results">
             <h2>Optimization Results</h2>
             <p>Number of Solar Panels: {{ solar }}</p>
@@ -154,45 +164,266 @@
                 <input type="submit" value="Implementation Data" class="submit-button">
             </form>
         </div>
+
+
     </div>
 </div>
+
+
 <script>
-  document.addEventListener("DOMContentLoaded", function() {
-    var toggleSolar = document.getElementById("toggle-solar");
-    var toggleBatteryDischarge = document.getElementById("toggle-battery-discharge");
-    var toggleBatteryCharge = document.getElementById("toggle-battery-charge");
-    var togglePowerDemand = document.getElementById("toggle-power-demand");
-    var toggleGeneratorPower = document.getElementById("toggle-generator-power");
-    var timeFrameInput = document.getElementById("time-frame");
-    var updateGraphButton = document.getElementById("update-graph");
+    var demand = {{ power_demand|safe }};
+    var solar = {{ power_solar|safe }};
+    var generator = {{ power_generator|safe }};
+    var batt_discharge = {{power_battery_discharge|safe }};
+    var batt_charge = {{power_battery_charge|safe }};
+    var wasted_energy = {{dumped_energy|safe }};
+    var batt_energy = {{batt_energy|safe}};
+    var batt_emax ={{EbattMax|safe }};
+    var batt_emin ={{EbattMin|safe}};
+    var time = Array.from({length: 8760}, (_, i) => i);
 
-    // Add event listeners to toggle visibility of traces
-    toggleSolar.addEventListener("click", function() {
-      // Toggle visibility of solar trace
+    var EbattMax = Array(time.length).fill(batt_emax);
+    var EbattMin = Array(time.length).fill(batt_emin);
+
+
+    //plotting power vs time graph
+    var trace1 = {
+        x: time,
+        y: demand.slice(0, 8760),
+        mode: 'markers+lines',
+        type: 'line',
+        name: 'Power Demand'
+    };
+    var trace2 = {
+        x: time,
+        y: solar.slice(0, 8760),
+        mode: 'markers+lines',
+        type: 'line',
+        name: 'Power from Solar'
+    };
+    var trace3 = {
+        x: time,
+        y: generator.slice(0, 8760),
+        mode: 'markers+lines',
+        type: 'line',
+        name: 'Power from Generator'
+    };
+    var trace4 = {
+        x: time,
+        y: batt_charge.slice(0, 8760),
+        mode: 'markers+lines',
+        type: 'line',
+        name: 'Power taken to charge Batteries'
+    };
+    var trace5 = {
+        x: time,
+        y: batt_discharge.slice(0, 8760),
+        mode: 'markers+lines',
+        type: 'line',
+        name: 'Power from Batteries'
+    };
+
+    var power_time_data = [trace1, trace2, trace3, trace4, trace5];
+
+    var layout = {
+        title: 'Energy Flow Throughout the Day',
+         xaxis:{range: [0, 24]}
+    };
+
+    Plotly.newPlot('graph_power_time', power_time_data, layout);
+
+    //plotting battery energy ss time graph
+
+    var trace_batt_max = {
+        x: time,
+        y: EbattMax,
+        mode: 'markers+lines',
+        type: 'line',
+        name: 'Maximum Energy of Batteries'
+    };
+
+    var trace_batt_min = {
+        x: time,
+        y: EbattMin,
+        mode: 'markers+lines',
+        type: 'line',
+        name: 'Minimum Energy of Batteries'
+    };
+
+    var trace_batt_energy = {
+        x: time,
+        y: batt_energy.slice(0, 8760),
+        mode: 'markers+lines',
+        type: 'line',
+        name: 'Energy Batteries'
+    };
+
+    var Battery_energy_data = [trace_batt_max, trace_batt_min ,trace_batt_energy];
+
+    var batt_energy_layout = {
+        title: 'Energy level of Batteries',
+        xaxis:{range: [0, 24]}
+    };
+
+    Plotly.newPlot('batt_energy_graph', Battery_energy_data, batt_energy_layout);
+
+
+    //plotting wasted energy graph
+
+    var trace_wasted_energy = {
+        x: time,
+        y: wasted_energy.slice(0, 8760),
+        mode: 'markers+lines',
+        type: 'line',
+        name: 'Energy not Used '
+    };
+
+    var wasted_energy_layout = {
+        title: 'Waste Energy ',
+        xaxis:{range: [0, 24]}
+    };
+
+    var wasted_energy_data = [trace_wasted_energy]
+
+    Plotly.newPlot('wasted_energy_graph', wasted_energy_data, wasted_energy_layout);
+
+
+
+    // button adjusting time in all graphs
+
+    document.getElementById('update-time').addEventListener('click', function(event) {
+        event.preventDefault();
+
+        var start_time = parseInt(document.getElementById('start-time').value);
+        var end_time = parseInt(document.getElementById('end-time').value);
+
+        var new_time = Array.from({length: end_time - start_time + 1}, (_, i) => i + start_time);
+
+        //changing time for power time graph
+
+        trace1.x = new_time;
+        trace1.y = demand.slice(start_time, end_time + 1);
+
+        trace2.x = new_time;
+        trace2.y = solar.slice(start_time, end_time + 1);
+
+        trace3.x = new_time;
+        trace3.y = generator.slice(start_time, end_time + 1);
+
+        trace4.x = new_time;
+        trace4.y = batt_charge.slice(start_time, end_time + 1);
+
+        trace5.x = new_time;
+        trace5.y = batt_discharge.slice(start_time, end_time + 1);
+
+        var new_data = [trace1, trace2, trace3, trace4, trace5];
+
+        var new_layout = {
+            title: 'Energy Flow Throughout the Day',
+            xaxis: {
+                range: [start_time, end_time]
+            }
+        };
+        Plotly.newPlot('graph_power_time', new_data, new_layout);
+
+
+        // chnaging time for battery enrgy level graph
+
+        trace_batt_min.x = new_time;
+        trace_batt_min.y = EbattMin.slice(start_time, end_time + 1);
+
+        trace_batt_max.x = new_time;
+        trace_batt_max.y = EbattMax.slice(start_time, end_time + 1);
+
+        trace_batt_energy.x = new_time;
+        trace_batt_energy.y = batt_energy.slice(start_time, end_time + 1);
+
+        var new_batt_data =[trace_batt_energy, trace_batt_max, trace_batt_min]
+
+        var new_batt_layout = {
+            title: 'Energy level of Batteries',
+            xaxis: {
+                range: [start_time, end_time]
+            }
+        };
+        Plotly.newPlot('batt_energy_graph', new_batt_data, new_batt_layout);
+
+
+        //changin time for wasted energy graph
+
+        trace_wasted_energy.x = new_time;
+        trace_wasted_energy.y = batt_energy.slice(start_time, end_time + 1);
+
+        var new_wasted_energy_data =[trace_wasted_energy, ]
+
+        var new_wasted_energy_layout = {
+            title: 'Waste Energy',
+            xaxis: {
+                range: [start_time, end_time]
+            }
+        };
+        Plotly.newPlot('wasted_energy_graph', new_wasted_energy_data, new_wasted_energy_layout);
+
+
+
+
+
     });
 
-    toggleBatteryDischarge.addEventListener("click", function() {
-      // Toggle visibility of battery discharge trace
+    // buttons to turn off trace solar power, generator power, power demand , power charging battery and power discharging from battery
+
+    document.getElementById('solar').addEventListener('click', function() {
+        var index = power_time_data.indexOf(trace2);
+        if (index > -1) {
+            power_time_data.splice(index, 1);
+        } else {
+            power_time_data.push(trace2);
+        }
+        Plotly.newPlot('graph_power_time', power_time_data, layout);
     });
 
-    toggleBatteryCharge.addEventListener("click", function() {
-      // Toggle visibility of battery charge trace
+    document.getElementById('power-demand').addEventListener('click', function() {
+        var index = power_time_data.indexOf(trace1);
+        if (index > -1) {
+            power_time_data.splice(index, 1);
+        } else {
+            power_time_data.push(trace1);
+        }
+        Plotly.newPlot('graph_power_time', power_time_data, layout);
     });
 
-    togglePowerDemand.addEventListener("click", function() {
-      // Toggle visibility of power demand trace
+    document.getElementById('generator-power').addEventListener('click', function() {
+        var index = power_time_data.indexOf(trace3);
+        if (index > -1) {
+            power_time_data.splice(index, 1);
+        } else {
+            power_time_data.push(trace3);
+        }
+        Plotly.newPlot('graph_power_time', power_time_data, layout);
     });
 
-    toggleGeneratorPower.addEventListener("click", function() {
-      // Toggle visibility of generator power trace
+    document.getElementById('battery-charge').addEventListener('click', function() {
+        var index = power_time_data.indexOf(trace4);
+        if (index > -1) {
+            power_time_data.splice(index, 1);
+        } else {
+            power_time_data.push(trace4);
+        }
+        Plotly.newPlot('graph_power_time', power_time_data, layout);
     });
 
-    // Add event listener to update graph based on selected time frame
-    updateGraphButton.addEventListener("click", function() {
-      var selectedTimeFrame = parseInt(timeFrameInput.value);
-      // Update graph based on selected time frame
+    document.getElementById('battery-discharge').addEventListener('click', function() {
+        var index = power_time_data.indexOf(trace5);
+        if (index > -1) {
+            power_time_data.splice(index, 1);
+        } else {
+            power_time_data.push(trace5);
+        }
+        Plotly.newPlot('graph_power_time', power_time_data, layout);
     });
-  });
+
+
+
 </script>
 </body>
 </html>
