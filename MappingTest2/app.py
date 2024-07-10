@@ -370,16 +370,43 @@ def gensizer():
             min_autonomy_days = int(request.form.get('min_autonomy_days', 1))
             max_off_hours = int(request.form.get('max_off_hours', 1))
             pvsystem_loss = float(request.form.get('pvsystem_loss', 1))
-            day_demand = json.loads(request.form.get('yearly_demand_array', '[]'))
+            load_profile_1 = json.loads(request.form.get('load_profile_1', '[]'))
+            load_profile_2 = json.loads(request.form.get('load_profile_2', '[]'))
+            load_profile_3 = json.loads(request.form.get('load_profile_3', '[]'))
+            load_profile_4 = json.loads(request.form.get('load_profile_4', '[]'))
+            load_profile_5 = json.loads(request.form.get('load_profile_5', '[]'))
             power_demand = []
+            load_1_no_customer = int(request.form.get('load_1_no_customer', 1))
+            load_2_no_customer = int(request.form.get('load_2_no_customer', 1))
+            load_3_no_customer = int(request.form.get('load_3_no_customer', 1))
+            load_4_no_customer = int(request.form.get('load_4_no_customer', 1))
+            load_5_no_customer = int(request.form.get('load_5_no_customer', 1))
             number_of_customers = (session.get('number_of_customers', 1))
 
             # Append the 24-hour demand array to power_demand 365 times
             # Multiply each value in the day_demand array by number of customers (currently fixed value)
-            modified_demand = [value * number_of_customers for value in day_demand]
+            modified_load_1_demand = [value * load_1_no_customer for value in load_profile_1]
+            array_load_1_demand = modified_load_1_demand * 365
 
-            #  full year power demand (length 8760 hours)
-            power_demand = modified_demand * 365
+            modified_load_2_demand = [value * load_2_no_customer for value in load_profile_2]
+            array_load_2_demand = modified_load_2_demand * 365
+
+            modified_load_3_demand = [value * load_3_no_customer for value in load_profile_3]
+            array_load_3_demand = modified_load_3_demand * 365
+
+            modified_load_4_demand = [value * load_4_no_customer for value in load_profile_4]
+            array_load_4_demand = modified_load_4_demand * 365
+
+            modified_load_5_demand = [value * load_5_no_customer for value in load_profile_5]
+            array_load_5_demand = modified_load_5_demand * 365
+
+
+
+            power_demand = []
+            for i in range(len(array_load_1_demand)):
+
+                power_demand.append(array_load_1_demand[i] + array_load_2_demand[i]+ array_load_3_demand[i]+array_load_4_demand[i] + array_load_5_demand[i])
+
 
             print("Yearly Demand Array Length:", len(power_demand))
 

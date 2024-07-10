@@ -545,7 +545,7 @@ class GenSizer:
         self.battery_power()
 
     def plot_graphs(self):
-        # Extracting necessary data
+
         Num_solar = self.swarm[0].pos[0]
         num_batteries = self.swarm[0].pos[1]
         num_generator = self.swarm[0].pos[2]
