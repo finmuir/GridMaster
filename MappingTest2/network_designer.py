@@ -282,7 +282,7 @@ class NetworkDesigner:
 
     def _init_matrices(self):
         """
-        Create connection/distance/resistanece/checked paths matrices.
+        Create connection/distance/resistance/checked paths matrices.
         Uses numpy arrays.
 
         """
@@ -454,6 +454,7 @@ class NetworkDesigner:
 
         if best_gate_idx == None or best_node_idx == None:  # no new candidates
             return False, False
+
         else:
             return best_gate_idx, best_node_idx  # new candidates found
 

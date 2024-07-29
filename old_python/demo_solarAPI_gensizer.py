@@ -5,7 +5,7 @@
 import random
 
 import pvoutput as pv
-import gensizer as gs
+from old_python import gensizer as gs
 
 """
 Cost & technical parameters

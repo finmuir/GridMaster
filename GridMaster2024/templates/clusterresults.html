@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GridMaster</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+    <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Didact Gothic', sans-serif;
+      overflow: hidden;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .page-container {
+      padding: 20px;
+      height: 70vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #background {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://developers.google.com/static/earth-engine/images/datasets/sentinel2_france_1280.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      filter: blur(8px);
+      z-index: -1;
+    }
+
+    #sidebar {
+      position: fixed;
+      padding-top: 70px;
+      right: 0;
+      top: 0;
+      width: 200px;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 2;
+    }
+
+    .sidebar a {
+      display: block;
+      color: #f2f2f2;
+      padding: 15px;
+      text-decoration: none;
+    }
+
+    .sidebar a:hover {
+      background-color: #ddd;
+      color: black;
+    }
+
+    #sidebar-button, #close-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 30px;
+      background: none;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      outline: none;
+      z-index: 3;
+    }
+
+    #map-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 80%; /* Adjust height */
+      width: 60%; /* Adjust width */
+      position: absolute;
+      z-index: 1;
+      top: 15%; /* Move down */
+      left: 5%; /* Move left */
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+    }
+
+    #content-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      background-color: rgba(248, 248, 248, 0.8);
+      height: 30%; /* Adjust height */
+      width: 25%; /* Adjust width */
+      position: absolute; /* Changed to absolute */
+      z-index: 1;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+      left: 70%;
+      top: 30%;
+      padding-left: 20px;
+      overflow: visible;
+    }
+
+    .content-wrapper {
+      display: flex;
+      padding-top: 15px;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .container-title {
+      margin: auto;
+      margin-top: 1vh;
+      text-align: center;
+      color: #666666;
+    }
+
+    .data-items {
+      align-self: flex-start;
+    }
+
+    .data-item {
+      margin-top: 3vh;
+    }
+
+    .submit-button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 2.5% 2.5%;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 20px;
+      margin-top: 5px;
+      font-family: 'Didact Gothic', sans-serif;
+      text-decoration: none;
+      position: absolute;
+      left: -20%;
+      top: 70%;
+      margin-left: 30vh;
+      width: 33%;
+    }
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('welcome') }}">
+      <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
+    </a>
+    <button id="sidebar-button">&#9776;</button>
+    <button id="close-button" style="display: none;">&#10006;</button>
+
+    <div class="page-container">
+        <div id="background"></div>
+        <div id="sidebar" class="sidebar">
+            <a href="{{ url_for('welcome') }}">Home</a>
+            <a href="https://github.com/finmuir/GridMaster">GitHub</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact</a>
+        </div>
+        <div id="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <div id="content-container">
+        <div class="content-wrapper">
+            <h2 class="container-title">Cluster Information</h2>
+            <form method="post" action="{{ url_for('network_design_results') }}">
+                <input type="hidden" name="clusterData" id="clusterData">
+                <input type="hidden" name="roadData" id="roadData">
+                <input type="submit" value="Build Network" class="submit-button">
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Get JSON data from Flask template variables
+        const clusterDataJson = {{ cluster_data | tojson }};
+        const roadDataJson = {{ road_data | tojson }};
+
+        // Parse JSON data
+        const clusterData = JSON.parse(clusterDataJson);
+        const roadData = JSON.parse(roadDataJson);
+
+        // Create traces for Plotly
+        const customerTrace = {
+            type: 'scattermapbox',
+            mode: 'markers',
+            lat: clusterData.filter(d => d.Type === 'customer').map(d => d.y),
+            lon: clusterData.filter(d => d.Type === 'customer').map(d => d.x),
+            marker: { size: 4, color: 'blue' },
+            name: 'Customers'
+        };
+
+        const poleTrace = {
+            type: 'scattermapbox',
+            mode: 'markers',
+            lat: clusterData.filter(d => d.Type === 'pole').map(d => d.y),
+            lon: clusterData.filter(d => d.Type === 'pole').map(d => d.x),
+            marker: { size: 6, color: 'red' },
+            name: 'Poles'
+        };
+
+        const roadNodesTrace = {
+            type: 'scattermapbox',
+            mode: 'markers',
+            lat: roadData.filter(d => d.Type === 'road_node').map(d => d.y),
+            lon: roadData.filter(d => d.Type === 'road_node').map(d => d.x),
+            marker: { size: 4, color: 'black' },
+            name: 'Road Nodes'
+        };
+
+        {#const roadEdgesTrace = {#}
+        {#    type: 'scattermapbox',#}
+        {#    mode: 'lines',#}
+        {#    lat: roadData.filter(d => d.Type === 'edge_start').map(d => d.y).concat(#}
+        {#        roadData.filter(d => d.Type === 'edge_end').map(d => d.y)),#}
+        {#    lon: roadData.filter(d => d.Type === 'edge_start').map(d => d.x).concat(#}
+        {#        roadData.filter(d => d.Type === 'edge_end').map(d => d.x)),#}
+        {#    line: { width: 1, color: 'black' },#}
+        {#    name: 'Road Edges'#}
+        {#};#}
+
+        // Define layout
+        const layout = {
+            mapbox: {
+                style: 'open-street-map',
+                center: { lat: clusterData[0]?.y || 0, lon: clusterData[0]?.x || 0 },
+                zoom: 12
+            },
+            margin: { r: 0, t: 0, l: 0, b: 0 }
+        };
+
+        // Create plot
+        Plotly.newPlot('map', [customerTrace, poleTrace, roadNodesTrace,], layout);
+
+        const clusterData = JSON.stringify(clusterDataJson);
+        const roadData = JSON.stringify(roadDataJson);
+
+
+    </script>
+</body>
+</html>

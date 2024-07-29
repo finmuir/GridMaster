@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>GridMaster</title>
+    <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
+    <style>
+        body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Didact Gothic', sans-serif;
+      overflow: hidden;
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .page-container {
+      padding: 20px;
+      height: 70vh;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #background {
+      position: fixed;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url('https://developers.google.com/static/earth-engine/images/datasets/sentinel2_france_1280.jpg');
+      background-position: center;
+      background-repeat: no-repeat;
+      background-size: cover;
+      filter: blur(8px);
+      z-index: -1;
+    }
+
+    #sidebar {
+      position: fixed;
+      padding-top: 70px;
+      right: 0;
+      top: 0;
+      width: 200px;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+      display: none; /* initially hidden */
+        z-index: 2;
+    }
+
+    .sidebar a {
+      display: block; /* Make the links appear below each other */
+      color: #f2f2f2; /* Color of links */
+      padding: 15px; /* Padding inside the sidebar */
+      text-decoration: none; /* Remove underline from links */
+    }
+
+    .sidebar a:hover {
+      background-color: #ddd; /* Change color of links on hover */
+      color: black;
+    }
+
+    #sidebar-button, #close-button {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      font-size: 30px;
+      background: none;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      outline: none;
+      z-index: 3;
+    }
+
+     html, body {
+      height: 100vh; /* Set this to 100vh */
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    #content-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    background-color: rgba(248, 248, 248, 0.8);
+    height: 54vh;
+    width: 50vw;
+    z-index: 1;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    left: 27%;
+    top: 23%;
+    padding-left: 20px;
+    overflow: auto;
+    }
+
+  .content-wrapper {
+    display: flex;
+    padding-top: 15px;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .container-title {
+    margin: auto;
+    margin-top: 1vh;
+    text-align: center;
+    color: #666666;
+  }
+
+    table {
+    width: 97.5%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    }
+
+    tr:nth-child(even) {
+    background-color: #f9f9f9;
+    }
+
+    th, td {
+    text-align: left;
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    }
+
+    .button-container {
+    text-align: center;
+    margin-top: 20px;
+    }
+
+    .center-button {
+    padding: 0.5% 1%;
+    font-size: 85%;
+    color: white;
+    background-color: #4CAF50;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    outline: none;
+    text-decoration: none;
+    position: absolute;
+    right: 48%;
+    bottom: 18%;
+    }
+
+    .center-button:hover {
+    background-color: #367c39;
+    }
+
+    @media (max-width: 800px) {
+  #content-container {
+    width: 50vw;
+    max-height: 60%;
+    padding: 10px;
+  }
+}
+
+    </style>
+</head>
+<body>
+    <a href="{{ url_for('welcome') }}">
+      <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
+    </a>
+    <button id="sidebar-button">&#9776;</button>
+    <button id="close-button" style="display: none;">&#10006;</button>
+
+    <div class="page-container">
+        <div id="background"></div>
+        <div id="sidebar" class="sidebar">
+            <a href="{{ url_for('welcome') }}">Home</a>
+            <a href="https://github.com/finmuir/powergen-py">GitHub</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact</a>
+        </div>
+
+    <div id="content-container">
+    <div class="content-wrapper">
+        <h2 class="container-title">Bill Of Quantities</h2>
+            <table>
+        <tr>
+            <th>Item</th>
+            <th>Cost</th>
+        </tr>
+        {% for item, value in bill_of_quantities.items() %}
+        <tr>
+            <td>{{ item }}</td>
+            <td>{{ value }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    </div>
+    <div class="button-container">
+        <a href="{{ url_for('download_boq') }}" class="center-button">Download</a>
+    </div>
+    </div>
+    <script>
+        var sidebarButton = document.getElementById('sidebar-button');
+        var closeButton = document.getElementById('close-button');
+        var sidebar = document.getElementById('sidebar');
+
+        sidebarButton.onclick = function() {
+            sidebar.style.display = 'block';
+            sidebarButton.style.display = 'none';
+            closeButton.style.display = 'block';
+        }
+
+        closeButton.onclick = function() {
+            sidebar.style.display = 'none';
+            closeButton.style.display = 'none';
+            sidebarButton.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

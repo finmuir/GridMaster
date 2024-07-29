@@ -12,8 +12,7 @@ import random
 
 from MappingTest2 import customer_clustering as cc, network_designer as nd
 import pvoutput as pv
-import gensizer as gs
-
+from old_python import gensizer as gs
 
 # STEP 0 - DEFINING PARAMETERS
 
