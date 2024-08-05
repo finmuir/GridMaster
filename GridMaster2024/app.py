@@ -19,6 +19,7 @@ import io
 import requests
 import json
 import RoadMapping
+import NetworkDessigner
 import networkx as nx
 
 
@@ -72,7 +73,7 @@ def cluster_results():
             initial_lat = float(df.loc['X', :].values[0]) if 'X' in df.index else None
             initial_lng = float(df.loc['Y', :].values[0]) if 'Y' in df.index else None
             # Ensure that the order is longitude first, then latitude
-            source_coords = (initial_lng, initial_lat) if initial_lat is not None and initial_lng is not None else (
+            source_coords = session['source_coords'] = (initial_lng, initial_lat) if initial_lat is not None and initial_lng is not None else (
             15, 15)
         except (ValueError, IndexError):
             # Handle cases where conversion to float fails or values are not found
@@ -138,9 +139,9 @@ def cluster_results():
         color = random.randint(0, 500)
         for i in range(len(x)):
             cluster_data.append(
-                {"x": x[i], "y": y[i], "Cluster": idx, "Type": "customer"})
+                {"x": x[i], "y": y[i], "Cluster": idx, "Type": "customer", 'load_profile':'profile1'})
         cluster_data.append(
-            {"x": x_c, "y": y_c, "Cluster": idx, "Type": "pole"})
+            {"x": x_c, "y": y_c, "Cluster": idx, "Type": "customer_pole"})
 
     df = pd.DataFrame(cluster_data)
 
@@ -153,12 +154,10 @@ def cluster_results():
     for _, row in nodes_df.iterrows():
         road_data.append({"x": row['lon'], "y": row['lat'], "Type": "road_node"})
     for _, row in edges_df.iterrows():
-        start_lat, start_lon = row['start']
-        end_lat, end_lon = row['end']
-        road_data.append({"x": start_lon, "y": start_lat, "Type": "edge_start"})
-        road_data.append({"x": end_lon, "y": end_lat, "Type": "edge_end"})
+        road_data.append({"x": row['lon'], "y": row['lat'], "Type": "road_edge"})
 
     road_df = pd.DataFrame(road_data)
+    print(road_df)
 
     # Set up your Mapbox access token
     px.set_mapbox_access_token(
@@ -174,6 +173,35 @@ def cluster_results():
 #shows the network
 @app.route('/networkdesignerresults', methods=['GET', 'POST'])
 def network_design_results():
+    network_voltage = session.get('network_voltage')
+    pole_spacing = session.get('pole_spacing')
+    resistance_per_km = session.get('resistance_per_km')
+    current_rating = session.get('current_rating')
+    max_voltage_drop = session.get('max_voltage_drop')
+    max_customers = session.get('max_customers')
+    distance_threshold = session.get('distance_threshold')
+    load_profile_1 = session.get('load_profile_1')
+    load_profile_2 = session.get('load_profile_2')
+    load_profile_3 = session.get('load_profile_3')
+    load_profile_4 = session.get('load_profile_4')
+    load_profile_5 = session.get('load_profile_5')
+    clusterData = session['clusterData'] = json.loads(request.form.get('clusterData', '[]'))
+    roadData = session['roadData'] = json.loads(request.form.get('roadData', '[]'))
+    source_coords = session.get('source_coords')
+
+    NetworkDessigner.check_data(network_voltage,
+                                pole_spacing,
+                                resistance_per_km,
+                                current_rating,
+                                max_voltage_drop,
+                                load_profile_1,
+                                load_profile_2,
+                                load_profile_3,
+                                load_profile_4,
+                                load_profile_5,
+                                clusterData,
+                                roadData)
+
 
     return render_template('networkdesignresult.html')
 

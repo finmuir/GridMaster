@@ -1,5 +1,6 @@
 import overpy
 import pandas as pd
+import networkx as nx
 
 def calculate_bounding_box(center_lat, center_lon, distance_threshold):
     lat_offset = (distance_threshold*0.25) / 111111  # Approximate latitude degrees per meter
@@ -27,24 +28,35 @@ def find_roads(south, west, north, east):
         print(f"Error fetching data: {e}")
         return None
 
-import pandas as pd
+
 
 def format_road_data(result):
-    nodes = []
-    edges = []
+    # Create a graph
+    G = nx.Graph()
+
+    # Add nodes and edges to the graph
+    nodes_data = []
+    edges_data = []
 
     for way in result.ways:
-        # Keep track of nodes and edges
-        prev_node = None
-        for i, node in enumerate(way.nodes):
-            nodes.append({'lat': node.lat, 'lon': node.lon, 'type': 'road_node'})
-            if prev_node:
-                # Avoid connecting the last node to the first node if not a valid loop
-                if not (i == len(way.nodes) - 1 and way.nodes[0] == node):
-                    edges.append({'start': prev_node, 'end': (node.lat, node.lon)})
-            prev_node = (node.lat, node.lon)
+        nodes = way.get_nodes(resolve_missing=True)
+        for i in range(len(nodes)-1):
+            node1 = nodes[i]
+            node2 = nodes[i + 1]
+            G.add_node(node1.id, lat=float(node1.lat), lon=float(node1.lon))
+            G.add_node(node2.id, lat=float(node2.lat), lon=float(node2.lon))
+            G.add_edge(node1.id, node2.id, way_id=way.id)
+            edges_data.append({
+                'lat': [float(node1.lat), float(node2.lat)],
+                'lon': [float(node1.lon), float(node2.lon)]
+            })
+            nodes_data.extend([
+                {'id': node1.id, 'lat': float(node1.lat), 'lon': float(node1.lon)},
+                {'id': node2.id, 'lat': float(node2.lat), 'lon': float(node2.lon)}
+            ])
+    # Create DataFrames for Plotly Express
+    nodes_df = pd.DataFrame(nodes_data).drop_duplicates()
+    edges_df = pd.DataFrame(edges_data)
 
-    nodes_df = pd.DataFrame(nodes)
-    edges_df = pd.DataFrame(edges)
     return nodes_df, edges_df
 

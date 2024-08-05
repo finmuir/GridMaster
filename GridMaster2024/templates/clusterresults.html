@@ -193,8 +193,8 @@
 
     <script>
         // Get JSON data from Flask template variables
-        const clusterDataJson = {{ cluster_data | tojson }};
-        const roadDataJson = {{ road_data | tojson }};
+        const clusterDataJson = {{ cluster_data | tojson | safe }};
+        const roadDataJson = {{ road_data | tojson | safe }};
 
         // Parse JSON data
         const clusterData = JSON.parse(clusterDataJson);
@@ -213,8 +213,8 @@
         const poleTrace = {
             type: 'scattermapbox',
             mode: 'markers',
-            lat: clusterData.filter(d => d.Type === 'pole').map(d => d.y),
-            lon: clusterData.filter(d => d.Type === 'pole').map(d => d.x),
+            lat: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.y),
+            lon: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.x),
             marker: { size: 6, color: 'red' },
             name: 'Poles'
         };
@@ -228,16 +228,16 @@
             name: 'Road Nodes'
         };
 
-        {#const roadEdgesTrace = {#}
-        {#    type: 'scattermapbox',#}
-        {#    mode: 'lines',#}
-        {#    lat: roadData.filter(d => d.Type === 'edge_start').map(d => d.y).concat(#}
-        {#        roadData.filter(d => d.Type === 'edge_end').map(d => d.y)),#}
-        {#    lon: roadData.filter(d => d.Type === 'edge_start').map(d => d.x).concat(#}
-        {#        roadData.filter(d => d.Type === 'edge_end').map(d => d.x)),#}
-        {#    line: { width: 1, color: 'black' },#}
-        {#    name: 'Road Edges'#}
-        {#};#}
+        // Create traces for road edges
+        const roadEdgesTrace = {
+            type: 'scattermapbox',
+            mode: 'lines',
+            lat: roadData.filter(d => d.Type === 'road_edge').flatMap(d => d.y),
+            lon: roadData.filter(d => d.Type === 'road_edge').flatMap(d => d.x),
+            line: { width: 1, color: 'black' },
+            name: 'Road Edges'
+        };
+
 
         // Define layout
         const layout = {
@@ -250,12 +250,18 @@
         };
 
         // Create plot
-        Plotly.newPlot('map', [customerTrace, poleTrace, roadNodesTrace,], layout);
+        Plotly.newPlot('map', [customerTrace, poleTrace, roadNodesTrace,roadEdgesTrace,], layout);
 
-        const clusterData = JSON.stringify(clusterDataJson);
-        const roadData = JSON.stringify(roadDataJson);
+
+
+
+
+        document.getElementById('clusterData').value = JSON.stringify(clusterData);
+        document.getElementById('roadData').value = JSON.stringify(roadData);
+
 
 
     </script>
 </body>
 </html>
+
