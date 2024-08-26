@@ -109,12 +109,10 @@ class Cluster:
         if np.max(self.distances) > max_distance:
             self.valid = False
 
-            print("\ndistance constraint broken")
-
         else:
             self.valid = True
 
-            print("\ndistance valid")
+
 
     def test_voltages(self, network_voltage, max_voltage_drop, res_per_meter):
         """
@@ -145,13 +143,8 @@ class Cluster:
                 # self.voltage_valid = False
                 self.valid = False
 
-                print("\ncustomer voltage constraint broken", idx)
-
                 break
             else:
-
-                print("\ncustomer voltage valid", idx)
-
                 pass
 
     def test_max_connections(self, max_connections):
@@ -173,12 +166,7 @@ class Cluster:
         if len(self.customers) > max_connections:
 
             self.valid = False
-
-            print("\ncluster max connections constraint broken")
-
         else:
-
-            print("\ncluster max connections valid")
             pass
 
 
@@ -572,11 +560,11 @@ class CustomerClustering:
         dist_matrix = np.full(size, np.inf)  # all values initially NaN
         for idx_1, cluster_1 in enumerate(self.clusters):
 
-            print("\nchecking cluster", idx_1)
+
 
             # skip cluster if it already has maximum number of customers
             if cluster_1.n_customers == max_customers:
-                print("\nskipped cluster", idx_1)
+
 
                 continue
 
@@ -588,14 +576,10 @@ class CustomerClustering:
 
                 if idx_1 == idx_2:
 
-                    print("\nsame clusters:", idx_1, idx_2)
-
                     continue
 
                 elif ((cluster_1.n_customers + cluster_2.n_customers)
                       > max_customers):
-
-                    print("\nmax customers", idx_1, idx_2)
 
                     continue
 
@@ -620,8 +604,6 @@ class CustomerClustering:
                 dist = R * c
 
                 if self.max_distance != None and dist > self.max_distance:
-
-                    print("\ntoo distant", idx_1, idx_2)
 
                     continue
 

@@ -190,16 +190,6 @@
     </div>
     <script>
 
-         var map = L.map('map').setView([{{ source_coords[1] }}, {{ source_coords[0] }}], 17);
-        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppZW5veTEwM2RuM2Vwa2Z2MGE5amd4In0.xLfkUiN6YS9EVfRNyh5umQ', {
-            maxZoom: 18,
-            tileSize: 512,
-            zoomOffset: -1,
-            accessToken: 'pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppaGV2amgwMDhzM2RwcGE5eXllanM0In0.JGhdq86XC-ShgG2lokibfw'
-        }).addTo(map);
-        var points = {{ code | safe }};
-        eval(points);
-
          var sidebarButton = document.getElementById('sidebar-button');
         var closeButton = document.getElementById('close-button');
         var sidebar = document.getElementById('sidebar');

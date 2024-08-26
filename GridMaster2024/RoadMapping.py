@@ -1,15 +1,19 @@
 import overpy
 import pandas as pd
 import networkx as nx
+import plotly.graph_objects as go
+import plotly.express as px
+
 
 def calculate_bounding_box(center_lat, center_lon, distance_threshold):
-    lat_offset = (distance_threshold*0.25) / 111111  # Approximate latitude degrees per meter
-    lon_offset = distance_threshold*0.25 / (111111 * abs(center_lat))  # Approximate longitude degrees per meter
+    lat_offset = (distance_threshold * 0.5) / 111111  # Approximate latitude degrees per meter
+    lon_offset = distance_threshold * 0.5 / (111111 * abs(center_lat))  # Approximate longitude degrees per meter
     north = center_lat + lat_offset
     south = center_lat - lat_offset
     east = center_lon + lon_offset
     west = center_lon - lon_offset
     return south, west, north, east
+
 
 def find_roads(south, west, north, east):
     try:
@@ -29,7 +33,6 @@ def find_roads(south, west, north, east):
         return None
 
 
-
 def format_road_data(result):
     # Create a graph
     G = nx.Graph()
@@ -40,7 +43,7 @@ def format_road_data(result):
 
     for way in result.ways:
         nodes = way.get_nodes(resolve_missing=True)
-        for i in range(len(nodes)-1):
+        for i in range(len(nodes) - 1):
             node1 = nodes[i]
             node2 = nodes[i + 1]
             G.add_node(node1.id, lat=float(node1.lat), lon=float(node1.lon))
@@ -54,9 +57,62 @@ def format_road_data(result):
                 {'id': node1.id, 'lat': float(node1.lat), 'lon': float(node1.lon)},
                 {'id': node2.id, 'lat': float(node2.lat), 'lon': float(node2.lon)}
             ])
-    # Create DataFrames for Plotly Express
+
+    # Create DataFrames for Plotly
     nodes_df = pd.DataFrame(nodes_data).drop_duplicates()
     edges_df = pd.DataFrame(edges_data)
 
+
     return nodes_df, edges_df
 
+#
+# def plot_road_network(nodes_df, edges_df):
+#     # Create Plotly figure
+#     fig = go.Figure()
+#
+#     # Add OpenStreetMap as base layer
+#     fig.update_layout(
+#         mapbox=dict(
+#             style="open-street-map",
+#             center=dict(lat=nodes_df['lat'].mean(), lon=nodes_df['lon'].mean()),
+#             zoom=12
+#         )
+#     )
+#
+#     # Add edges to the plot
+#     for _, edge in edges_df.iterrows():
+#         fig.add_trace(go.Scattermapbox(
+#             lon=edge['lon'],
+#             lat=edge['lat'],
+#             mode='lines',
+#             line=dict(width=2, color='black'),
+#             name='Roads'
+#         ))
+#
+#     # Add nodes to the plot
+#     fig.add_trace(go.Scattermapbox(
+#         lon=nodes_df['lon'],
+#         lat=nodes_df['lat'],
+#         mode='markers',
+#         marker=dict(size=5, color='red'),
+#         name='Nodes'
+#     ))
+#
+#     fig.update_layout(
+#         title='Road Network Visualization',
+#         showlegend=True
+#     )
+#
+#     fig.show()
+
+
+# # Example usage
+# center_lat = -2.86707 # Latitude of Berlin
+# center_lon = 30.53309  # Longitude of Berlin
+# distance_threshold = 1000  # 5 km
+#
+# south, west, north, east = calculate_bounding_box(center_lat, center_lon, distance_threshold)
+# result = find_roads(south, west, north, east)
+# if result:
+#     nodes_df, edges_df = format_road_data(result)
+#     plot_road_network(nodes_df, edges_df)

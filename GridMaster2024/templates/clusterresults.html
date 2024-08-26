@@ -192,65 +192,88 @@
     </div>
 
     <script>
-        // Get JSON data from Flask template variables
-        const clusterDataJson = {{ cluster_data | tojson | safe }};
-        const roadDataJson = {{ road_data | tojson | safe }};
+      // Get JSON data from Flask template variables
+const clusterDataJson = {{ cluster_data | tojson | safe }};
+const roadDataJson = {{ road_data | tojson | safe }};
 
-        // Parse JSON data
-        const clusterData = JSON.parse(clusterDataJson);
-        const roadData = JSON.parse(roadDataJson);
+// Parse JSON data
+const clusterData = JSON.parse(clusterDataJson);
+const roadData = JSON.parse(roadDataJson);
 
-        // Create traces for Plotly
-        const customerTrace = {
-            type: 'scattermapbox',
-            mode: 'markers',
-            lat: clusterData.filter(d => d.Type === 'customer').map(d => d.y),
-            lon: clusterData.filter(d => d.Type === 'customer').map(d => d.x),
-            marker: { size: 4, color: 'blue' },
-            name: 'Customers'
-        };
+// Create traces for Plotly
+const customerTrace = {
+    type: 'scattermapbox',
+    mode: 'markers',
+    lat: clusterData.filter(d => d.Type === 'customer').map(d => d.y),
+    lon: clusterData.filter(d => d.Type === 'customer').map(d => d.x),
+    marker: { size: 4, color: 'blue' },
+    name: 'Customers'
+};
 
-        const poleTrace = {
-            type: 'scattermapbox',
-            mode: 'markers',
-            lat: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.y),
-            lon: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.x),
-            marker: { size: 6, color: 'red' },
-            name: 'Poles'
-        };
+const poleTrace = {
+    type: 'scattermapbox',
+    mode: 'markers',
+    lat: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.y),
+    lon: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.x),
+    marker: { size: 6, color: 'red' },
+    name: 'Poles'
+};
 
-        const roadNodesTrace = {
-            type: 'scattermapbox',
-            mode: 'markers',
-            lat: roadData.filter(d => d.Type === 'road_node').map(d => d.y),
-            lon: roadData.filter(d => d.Type === 'road_node').map(d => d.x),
-            marker: { size: 4, color: 'black' },
-            name: 'Road Nodes'
-        };
+const roadNodesTrace = {
+    type: 'scattermapbox',
+    mode: 'markers',
+    lat: roadData.filter(d => d.Type === 'road_node').map(d => d.y),
+    lon: roadData.filter(d => d.Type === 'road_node').map(d => d.x),
+    marker: { size: 4, color: 'black' },
+    name: 'Road Nodes'
+};
 
-        // Create traces for road edges
-        const roadEdgesTrace = {
+// Create traces for road edges
+const roadEdgesTrace = {
+    type: 'scattermapbox',
+    mode: 'lines',
+    lat: roadData.filter(d => d.Type === 'road_edge').flatMap(d => d.y),
+    lon: roadData.filter(d => d.Type === 'road_edge').flatMap(d => d.x),
+    line: { width: 1, color: 'black' },
+    name: 'Road Edges'
+};
+
+// Create edge traces from centroids to customers
+const edgeTraces = [];
+const centroids = clusterData.filter(d => d.Type === 'customer_pole');
+
+centroids.forEach(centroid => {
+    const edges = clusterData
+        .filter(d => d.Type === 'customer' && d.Cluster === centroid.Cluster)
+        .map(customer => ({
+            lon: [centroid.x, customer.x],
+            lat: [centroid.y, customer.y]
+        }));
+
+    edges.forEach(edge => {
+        edgeTraces.push({
             type: 'scattermapbox',
             mode: 'lines',
-            lat: roadData.filter(d => d.Type === 'road_edge').flatMap(d => d.y),
-            lon: roadData.filter(d => d.Type === 'road_edge').flatMap(d => d.x),
-            line: { width: 1, color: 'black' },
-            name: 'Road Edges'
-        };
+            lat: edge.lat,
+            lon: edge.lon,
+            line: { width: 2, color: 'green' },
+            name: `Edges from Cluster ${centroid.Cluster}`
+        });
+    });
+});
 
+// Define layout
+const layout = {
+    mapbox: {
+        style: 'open-street-map',
+        center: { lat: clusterData[0]?.y || 0, lon: clusterData[0]?.x || 0 },
+        zoom: 12
+    },
+    margin: { r: 0, t: 0, l: 0, b: 0 }
+};
 
-        // Define layout
-        const layout = {
-            mapbox: {
-                style: 'open-street-map',
-                center: { lat: clusterData[0]?.y || 0, lon: clusterData[0]?.x || 0 },
-                zoom: 12
-            },
-            margin: { r: 0, t: 0, l: 0, b: 0 }
-        };
-
-        // Create plot
-        Plotly.newPlot('map', [customerTrace, poleTrace, roadNodesTrace,roadEdgesTrace,], layout);
+// Create plot
+Plotly.newPlot('map', [customerTrace, poleTrace, roadNodesTrace, roadEdgesTrace, ...edgeTraces], layout);
 
 
 

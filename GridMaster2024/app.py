@@ -19,7 +19,7 @@ import io
 import requests
 import json
 import RoadMapping
-import NetworkDessigner
+from network_dessigner import NetworkDesigner as nd
 import networkx as nx
 
 
@@ -51,7 +51,7 @@ def cluster_inputs():
 #cluster results allows user to define desired path and avoid areas
 @app.route('/clusteresults', methods=['GET', 'POST'])
 def cluster_results():
-
+    # File and form data handling (unchanged)
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
@@ -69,18 +69,13 @@ def cluster_results():
         # Read the CSV to get the initial coordinates
         df = pd.read_csv(file_path, index_col=0)
         try:
-            # Extract the first set of coordinates and correct their order
             initial_lat = float(df.loc['X', :].values[0]) if 'X' in df.index else None
             initial_lng = float(df.loc['Y', :].values[0]) if 'Y' in df.index else None
-            # Ensure that the order is longitude first, then latitude
-            source_coords = session['source_coords'] = (initial_lng, initial_lat) if initial_lat is not None and initial_lng is not None else (
-            15, 15)
+            source_coords = session['source_coords'] = (initial_lng, initial_lat) if initial_lat is not None and initial_lng is not None else (15, 15)
         except (ValueError, IndexError):
-            # Handle cases where conversion to float fails or values are not found
             flash("Error reading coordinates from the file.")
             return redirect(url_for('clusterinputs'))
     else:
-        # Default coordinates if no file is uploaded
         source_coords = (15, 15)
 
     form_data = request.form
@@ -92,13 +87,13 @@ def cluster_results():
         session['max_voltage_drop'] = max_voltage_drop = float(form_data.get('max_voltage_drop'))
         session['max_customers'] = max_customers = int(form_data.get('max_customers'))
         session['distance_threshold'] = distance_threshold = int(form_data.get('distance_threshold'))
-        session['load_profile_1'] = json.loads(request.form.get('load_profile_1', '[]'))
-        session['load_profile_2']= json.loads(request.form.get('load_profile_2', '[]'))
+        load_profile_1 = session['load_profile_1'] = json.loads(request.form.get('load_profile_1', '[]'))
+        session['load_profile_2'] = json.loads(request.form.get('load_profile_2', '[]'))
         session['load_profile_3'] = json.loads(request.form.get('load_profile_3', '[]'))
         session['load_profile_4'] = json.loads(request.form.get('load_profile_4', '[]'))
         session['load_profile_5'] = json.loads(request.form.get('load_profile_5', '[]'))
         session['load_1_no_customer'] = int(request.form.get('load_1_no_customer', 1))
-        session['load_2_no_customer' ]= int(request.form.get('load_2_no_customer', 1))
+        session['load_2_no_customer'] = int(request.form.get('load_2_no_customer', 1))
         session['load_3_no_customer'] = int(request.form.get('load_3_no_customer', 1))
         session['load_4_no_customer'] = int(request.form.get('load_4_no_customer', 1))
         session['load_5_no_customer'] = int(request.form.get('load_5_no_customer', 1))
@@ -123,31 +118,53 @@ def cluster_results():
         distance_threshold=distance_threshold
     )
     if clusterer is None or not hasattr(clusterer, 'cluster'):
-        flash(
-            "No customers within the specified distance threshold or an error occurred. Please adjust the threshold or check your input data.")
+        flash("No customers within the specified distance threshold or an error occurred. Please adjust the threshold or check your input data.")
         return redirect(url_for('cluster_inputs'))
 
     clusterer.cluster(max_customers=max_customers)
 
-    # Prepare the data for the plot
+    # Extract distances from each cluster to centroid and prepare cluster data
     cluster_data = []
     for idx, cluster in enumerate(clusterer.clusters):
         x_c = cluster.position[0]
         y_c = cluster.position[1]
-        x = [customer.position[0] for customer in cluster.customers]
-        y = [customer.position[1] for customer in cluster.customers]
-        color = random.randint(0, 500)
-        for i in range(len(x)):
-            cluster_data.append(
-                {"x": x[i], "y": y[i], "Cluster": idx, "Type": "customer", 'load_profile':'profile1'})
-        cluster_data.append(
-            {"x": x_c, "y": y_c, "Cluster": idx, "Type": "customer_pole"})
 
+        # Collect distances
+        distances = cluster.distances
+        for i, customer in enumerate(cluster.customers):
+            customer_load = int(max(load_profile_1))
+            distance_to_centroid = distances[i]
+
+            # Append the customer data with distance to centroid
+            cluster_data.append({
+                "x": customer.position[0],
+                "y": customer.position[1],
+                "Cluster": idx,
+                "Type": "customer",
+                "load": customer_load,
+                "Distance_c": distance_to_centroid
+            })
+
+        # Append the customer pole data with the total load of the cluster
+        total_load = sum(int(max(load_profile_1)) for _ in cluster.customers)
+        cluster_data.append({
+            "x": x_c,
+            "y": y_c,
+            "Cluster": idx,
+            "Type": "customer_pole",
+            "load": total_load
+        })
+
+
+
+    # Convert cluster data to DataFrame
     df = pd.DataFrame(cluster_data)
 
-    south,west,north,east= RoadMapping.calculate_bounding_box(source_coords[0],source_coords[1],distance_threshold)
-    road_result = RoadMapping.find_roads(south,west,north,east)
+    # Road Mapping (unchanged)
+    south, west, north, east = RoadMapping.calculate_bounding_box(source_coords[0], source_coords[1], distance_threshold)
+    road_result = RoadMapping.find_roads(south, west, north, east)
     nodes_df, edges_df = RoadMapping.format_road_data(road_result)
+    # RoadMapping.plot_road_network(nodes_df, edges_df)
 
     # Add road data to DataFrame
     road_data = []
@@ -157,12 +174,6 @@ def cluster_results():
         road_data.append({"x": row['lon'], "y": row['lat'], "Type": "road_edge"})
 
     road_df = pd.DataFrame(road_data)
-    print(road_df)
-
-    # Set up your Mapbox access token
-    px.set_mapbox_access_token(
-        'pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppaGV2amgwMDhzM2RwcGE5eXllanM0In0.JGhdq86XC-ShgG2lokibfw')
-
 
     cluster_json = df.to_json(orient='records')
     road_json = road_df.to_json(orient='records')
@@ -170,14 +181,19 @@ def cluster_results():
     return render_template('clusterresults.html', cluster_data=cluster_json, road_data=road_json)
 
 
+
+
+
 #shows the network
+
 @app.route('/networkdesignerresults', methods=['GET', 'POST'])
 def network_design_results():
+    # Retrieve session data
     network_voltage = session.get('network_voltage')
     pole_spacing = session.get('pole_spacing')
     resistance_per_km = session.get('resistance_per_km')
     current_rating = session.get('current_rating')
-    max_voltage_drop = session.get('max_voltage_drop')
+    max_V_drop = session.get('max_voltage_drop')
     max_customers = session.get('max_customers')
     distance_threshold = session.get('distance_threshold')
     load_profile_1 = session.get('load_profile_1')
@@ -185,25 +201,35 @@ def network_design_results():
     load_profile_3 = session.get('load_profile_3')
     load_profile_4 = session.get('load_profile_4')
     load_profile_5 = session.get('load_profile_5')
-    clusterData = session['clusterData'] = json.loads(request.form.get('clusterData', '[]'))
-    roadData = session['roadData'] = json.loads(request.form.get('roadData', '[]'))
     source_coords = session.get('source_coords')
 
-    NetworkDessigner.check_data(network_voltage,
-                                pole_spacing,
-                                resistance_per_km,
-                                current_rating,
-                                max_voltage_drop,
-                                load_profile_1,
-                                load_profile_2,
-                                load_profile_3,
-                                load_profile_4,
-                                load_profile_5,
-                                clusterData,
-                                roadData)
+    # Load data from form submission
+    clusterData = json.loads(request.form.get('clusterData', '[]'))
+    roadData = json.loads(request.form.get('roadData', '[]'))
 
 
-    return render_template('networkdesignresult.html')
+    # Initialize NetworkDesigner with cluster data and other parameters
+    net = nd.import_from_csv(
+        clusterData,
+        roadData,
+        source_coords,
+        network_voltage,
+        pole_spacing,
+        resistance_per_km,
+        current_rating,
+        max_V_drop
+    )
+
+
+
+        # # Build the final network structure
+        # net.build_network()
+        # edges, pos = net.draw_graph()
+
+        # Return the results (replace with your actual rendering or JSON response)
+    return render_template('network_results.html')
+
+
 
 #allows use to input generation sizing parameters
 @app.route('/geninputs')
