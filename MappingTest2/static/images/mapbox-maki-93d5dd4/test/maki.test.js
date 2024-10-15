@@ -2,8 +2,8 @@ const fs = require('fs');
 const test = require('tape');
 const path = require('path');
 const xml2js = require('xml2js');
-const maki = require('../');
-const makiLayoutAll = require('../layouts/all');
+const maki = require('../browser.esm');
+const makiLayoutAll = require('../layouts/all.json');
 
 const parseString = xml2js.parseString;
 const svgPath = path.join(__dirname, '../icons/');

@@ -6,8 +6,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
-    <!-- Your CSS Styles Here -->
     <style>
     body, html {
       height: 100%;
@@ -50,21 +50,29 @@
       width: 200px;
       height: 100%;
       overflow: auto;
-      background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
-      display: none; /* initially hidden */
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 2;
     }
 
     .sidebar a {
-      display: block; /* Make the links appear below each other */
-      color: #f2f2f2; /* Color of links */
-      padding: 15px; /* Padding inside the sidebar */
-      text-decoration: none; /* Remove underline from links */
+      display: block;
+      color: #f2f2f2;
+      padding: 15px;
+      text-decoration: none;
     }
 
     .sidebar a:hover {
-      background-color: #ddd; /* Change color of links on hover */
+      background-color: #ddd;
       color: black;
     }
+
+    .submit-button {
+  /* ... other styles ... */
+  position: relative;
+  top: 0;
+  margin-left: 0;
+}
 
     #sidebar-button, #close-button {
       position: fixed;
@@ -76,19 +84,19 @@
       color: #ffffff;
       cursor: pointer;
       outline: none;
-      z-index: 1;
+      z-index: 3;
     }
 
     #map-container {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 900px;/* Adjust height */
-      width: 1200px; /* Adjust width */
-      position: relative;
+      height: 80%;/* Adjust height */
+      width: 60%; /* Adjust width */
+      position: absolute;
       z-index: 1;
       top: 15%; /* Move down */
-      left: -23%; /* Move left */
+      left: 5%; /* Move left */
     }
 
     #map {
@@ -113,15 +121,16 @@
     align-items: flex-start;
     justify-content: flex-start;
     background-color: rgba(248, 248, 248, 0.8);
-    height: 450px;/* Adjust height */
-    width: 650px; /* Adjust width */
+    height: 30%;/* Adjust height */
+    width: 25%; /* Adjust width */
     position: absolute; /* Changed to absolute */
     z-index: 1;
     border: 2px solid rgba(255, 255, 255, 0.5);
     border-radius: 10px;
-    left: 55%;
-    top: 23%;
+    left: 70%;
+    top: 30%;
     padding-left: 20px;
+    overflow: visible;
     }
 
   .content-wrapper {
@@ -146,27 +155,27 @@
       margin-top: 3vh;
   }
 
-      .submit-button{
+    .submit-button{
       background-color: #4CAF50;
       color: white;
-      padding: 12px 20px;
+      padding: 2.5% 2.5%;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 16px;
-      margin-top: 20px;
+      font-size: 20px;
+      margin-top: 5px;
       font-family: 'Didact Gothic', sans-serif;
       text-decoration: none;
-      position: relative;
-      top: 25vh;
-      margin-left: 33vh;
-          width: 55px;
+      position: absolute;
+      left: -20%;
+      top: 70%;
+      margin-left: 30vh;
+        width: 33%;
     }
 
     </style>
 </head>
 <body>
-    <!-- Your HTML Here -->
     <a href="{{ url_for('welcome') }}">
       <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
     </a>
@@ -176,12 +185,13 @@
     <div class="page-container">
         <div id="background"></div>
         <div id="sidebar" class="sidebar">
+            <a href="{{ url_for('welcome') }}">Home</a>
             <a href="https://github.com/finmuir/GridMaster">GitHub</a>
             <a href="#">About Us</a>
             <a href="#">Contact</a>
         </div>
         <div id="map-container">
-            <h2 style="position: absolute; top: -80px; left: 50%; transform: translateX(-50%); z-index: 2; color: #aaa;">Minigrid Implementation:</h2>
+            <h2 style="position: absolute; top: -80px; left: 50%; transform: translateX(-50%); z-index: 2; color: #aaa;">Customer Groups:</h2>
             <div id="map"></div>
             <div id="chart"></div>
         </div>
@@ -189,48 +199,79 @@
 
 <div id="content-container">
     <div class="content-wrapper">
-        <h2 class="container-title">Implementation Data</h2>
+        <h2 class="container-title">Cluster Information</h2>
         <div class="data-items">
-            <div class="data-item">Total Network Power Demand: {{ total_Pdem }}</div>
-            <div class="data-item">Network Cost: {{ total_cost }}</div>
-            <div class="data-item">Total Length: {{ total_length }}</div>
+            <div class="data-item">Number of Poles: {{ result.number_of_clusters }}</div>
+            <div class="data-item">Total line cost: {{ result.total_line_cost }}</div>
         </div>
-        <form action="{{ url_for('networkresults') }}">
-            <input type="Confirm" value="Confirm" class = "submit-button">
+        <form method="post" action="{{ url_for('plot_data_network') }}">
+            <input type="submit" value="Build Network" class = "submit-button">
         </form>
+{#        <button id="screenshot-button">Save Map Screenshot</button>#}
     </div>
 </div>
 
     <script>
 
-    var network_design_points = {{ network_design_points | safe }};
-    network_design_points.forEach(point => {
-        var networkMarkerIcon = L.icon({
-            iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
+        var map = L.map('map').setView([{{ source_coords[0] }}, {{ source_coords[1] }}], 17);
+
+        L.tileLayer('https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppZW5veTEwM2RuM2Vwa2Z2MGE5amd4In0.xLfkUiN6YS9EVfRNyh5umQ', {
+            maxZoom: 18,
+            tileSize: 512,
+            zoomOffset: -1,
+            accessToken: 'pk.eyJ1IjoiZmlubXVpciIsImEiOiJjbGppaGV2amgwMDhzM2RwcGE5eXllanM0In0.JGhdq86XC-ShgG2lokibfw'
+        }).addTo(map);
+        source_mark_icon = L.icon({
+                    iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/charging-station.svg',
+                    iconSize: [25, 41],
+                    iconAnchor: [12.5,20.5],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+        L.marker([{{ source_coords[0] }}, {{ source_coords[1] }}], {icon: source_mark_icon, draggable: 'true'}).addTo(map)
+
+        var points = {{ result.points | safe }};
+        points.forEach(point => {
+            var markerIcon;
+
+            if(point['type']=="pole"){
+                markerIcon = L.icon({
+                    iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/observation-tower.svg',
+                    iconSize: [22, 31],
+                    iconAnchor: [7.5, 7.5],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+            } else {
+                markerIcon = L.icon({
+                    iconUrl: 'static/images/mapbox-maki-93d5dd4/icons/markergreen.svg',
+                    iconSize: [20, 27],
+                    iconAnchor: [7.5, 7.5],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                });
+
+            }
+
+            var marker = L.marker([point.lat, point.lon], {icon: markerIcon, draggable: 'true'}).addTo(map);
+
+            if(point['type'] == "customer") {
+                marker.on('click', function() {
+                    map.removeLayer(marker);
+                });
+            }
+
+            marker.on('dragend', function (e) {
+                var lat = marker.getLatLng().lat,
+                    lon = marker.getLatLng().lng,
+                    label = point.label;
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/update-marker', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.send('lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lon) + '&label=' + encodeURIComponent(label));
+            });
         });
-
-        var networkMarker = L.marker([point.lat, point.lon], {icon: networkMarkerIcon}).addTo(map);
-    });
-
-    var marker = L.marker([point.lat, point.lon], {icon: markerIcon, draggable: 'true'}).addTo(map);
-
-    marker.on('dragend', function (e) {
-        var lat = marker.getLatLng().lat,
-            lon = marker.getLatLng().lng,
-            label = point.label;
-
-        // Send the new position to the server
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/update-marker', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.send('lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lon) + '&label=' + encodeURIComponent(label));
-    });
-});
 
         var sidebarButton = document.getElementById('sidebar-button');
         var closeButton = document.getElementById('close-button');
@@ -247,6 +288,19 @@
             closeButton.style.display = 'none';
             sidebarButton.style.display = 'block';
         }
+
+document.getElementById('screenshot-button').addEventListener('click', function() {
+    var mapContainer = document.getElementById('map');
+
+    html2canvas(mapContainer).then(function(canvas) {
+        var img = new Image();
+        img.src = canvas.toDataURL();
+
+        var win = window.open();
+        win.document.write('<img src="' + img.src + '"/>');
+    });
+});
+
     </script>
 </body>
 </html>

@@ -206,7 +206,7 @@ const customerTrace = {
     mode: 'markers',
     lat: clusterData.filter(d => d.Type === 'customer').map(d => d.y),
     lon: clusterData.filter(d => d.Type === 'customer').map(d => d.x),
-    marker: { size: 4, color: 'blue' },
+    marker: { size: 8, color: 'blue' },
     name: 'Customers'
 };
 
@@ -215,7 +215,7 @@ const poleTrace = {
     mode: 'markers',
     lat: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.y),
     lon: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.x),
-    marker: { size: 6, color: 'red' },
+    marker: { size: 10, color: 'red' },
     name: 'Poles'
 };
 
@@ -243,12 +243,7 @@ const edgeTraces = [];
 const centroids = clusterData.filter(d => d.Type === 'customer_pole');
 
 centroids.forEach(centroid => {
-    const edges = clusterData
-        .filter(d => d.Type === 'customer' && d.Cluster === centroid.Cluster)
-        .map(customer => ({
-            lon: [centroid.x, customer.x],
-            lat: [centroid.y, customer.y]
-        }));
+    const edges = clusterData.filter(d => d.Type === 'customer' && d.Cluster === centroid.Cluster).map(customer => ({lon: [centroid.x, customer.x], lat: [centroid.y, customer.y]}));
 
     edges.forEach(edge => {
         edgeTraces.push({
@@ -257,7 +252,6 @@ centroids.forEach(centroid => {
             lat: edge.lat,
             lon: edge.lon,
             line: { width: 2, color: 'green' },
-            name: `Edges from Cluster ${centroid.Cluster}`
         });
     });
 });
@@ -267,13 +261,13 @@ const layout = {
     mapbox: {
         style: 'open-street-map',
         center: { lat: clusterData[0]?.y || 0, lon: clusterData[0]?.x || 0 },
-        zoom: 12
+        zoom: 15
     },
     margin: { r: 0, t: 0, l: 0, b: 0 }
 };
 
 // Create plot
-Plotly.newPlot('map', [customerTrace, poleTrace, roadNodesTrace, roadEdgesTrace, ...edgeTraces], layout);
+Plotly.newPlot('map', [customerTrace, poleTrace, roadNodesTrace,  ...edgeTraces], layout);
 
 
 

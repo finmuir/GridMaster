@@ -1,7 +1,7 @@
 const test = require('tape');
 const esbuild = require('esbuild');
 
-const maki = require('../');
+const maki = require('../browser.esm');
 const fs = require('fs');
 const path = require('path');
 

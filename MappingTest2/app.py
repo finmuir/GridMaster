@@ -9,14 +9,12 @@ import plotly.express as px
 import pandas as pd
 from werkzeug.utils import secure_filename
 import os
-from bill_of_quantities import BillOfQuantities
 import csv
 from flask import Response
-from bill_of_quantities import BillOfQuantities
+from GridMaster2024.bill_of_quantities import BillOfQuantities
 import io
 from PVoutput2 import PVOutput
 from Gensizer2 import GenSizer
-import requests
 import json
 
 

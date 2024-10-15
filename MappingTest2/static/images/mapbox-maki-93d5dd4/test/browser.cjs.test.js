@@ -1,7 +1,7 @@
 const test = require('tape');
 
-const maki = require('../');
-const makiBrowser = require('../browser.cjs');
+const maki = require('../browser.esm');
+const makiBrowser = require('../browser.cjs.js');
 
 test('index', function(t) {
   t.deepEqual(

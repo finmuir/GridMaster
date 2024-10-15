@@ -9,17 +9,16 @@ import plotly.express as px
 import pandas as pd
 from werkzeug.utils import secure_filename
 import os
-#from bill_of_quantities import BillOfQuantities
+from bill_of_quantities import BillOfQuantities
 import csv
 from flask import Response
-#from bill_of_quantities import BillOfQuantities
 import io
-#from PVoutput import PVOutput
-#from Gensizer import GenSizer
+from PVoutput import PVOutput
+from GenSizer import GenSizer
 import requests
 import json
 import RoadMapping
-from network_dessigner import NetworkDesigner as nd
+from Network_designer import NetworkDesigner as nd
 import networkx as nx
 
 
@@ -43,12 +42,24 @@ def welcome():
     return render_template('welcome.html')
 
 
-#inputs page
+#route which can be used to create network materials page
+@app.route('/networkmaterials ', methods=['GET', 'POST'])
+def network_materials():
+    #network materials page
+
+    return render_template('networkmaterials.html')
+
+
+
+#network constraints page
 @app.route('/clusterinputs', methods=['GET', 'POST'])
 def cluster_inputs():
     return render_template('clusterinputs.html')
 
-#cluster results allows user to define desired path and avoid areas
+
+
+#cluster results shows clusters and roads
+#would want to be able to add roads and new customers
 @app.route('/clusteresults', methods=['GET', 'POST'])
 def cluster_results():
     # File and form data handling (unchanged)
@@ -132,7 +143,7 @@ def cluster_results():
         # Collect distances
         distances = cluster.distances
         for i, customer in enumerate(cluster.customers):
-            customer_load = int(max(load_profile_1))
+            customer_load = (load_profile_1)
             distance_to_centroid = distances[i]
 
             # Append the customer data with distance to centroid
@@ -146,7 +157,7 @@ def cluster_results():
             })
 
         # Append the customer pole data with the total load of the cluster
-        total_load = sum(int(max(load_profile_1)) for _ in cluster.customers)
+        total_load = load_profile_1
         cluster_data.append({
             "x": x_c,
             "y": y_c,
@@ -180,12 +191,7 @@ def cluster_results():
 
     return render_template('clusterresults.html', cluster_data=cluster_json, road_data=road_json)
 
-
-
-
-
-#shows the network
-
+#shows the final network layout
 @app.route('/networkdesignerresults', methods=['GET', 'POST'])
 def network_design_results():
     # Retrieve session data
@@ -220,18 +226,23 @@ def network_design_results():
         max_V_drop
     )
 
+    net.build_network()
+    edgesd = net.plot_network()
+    # nodesd,edgesd = net.draw_graph()
+    # nodes = pd.DataFrame(nodesd)
+    edges = pd.DataFrame(edgesd)
+    cluster=pd.DataFrame(clusterData)
+    road=pd.DataFrame(roadData)
 
+    edges = edges.to_json(orient='records')
+    cluster = cluster.to_json(orient='records')
+    road = road.to_json(orient='records')
 
-        # # Build the final network structure
-        # net.build_network()
-        # edges, pos = net.draw_graph()
 
         # Return the results (replace with your actual rendering or JSON response)
-    return render_template('network_results.html')
+    return render_template('networkresults.html',edges = edges,cluster_data=cluster,road_data=road )
 
-
-
-#allows use to input generation sizing parameters
+#allows user to input generation sizing parameters
 @app.route('/geninputs')
 def gensizerinputs():
     return render_template('gensizerinputs.html')
@@ -341,7 +352,7 @@ def gensizer():
                                dumped_energy=dumped_energy,
                                batt_energy=batt_energy)
 
-
+#last years BOQ could start from scratch or use this as reference
 @app.route('/billofquantities', methods=['GET', 'POST'])
 def billofquantities():
     # Render the BOQ template with the calculated values

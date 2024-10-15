@@ -1,4 +1,4 @@
-const maki = require('..');
+const maki = require('../browser.esm');
 const { writeFile } = require('fs');
 
 writeFile(

@@ -4,18 +4,27 @@ import networkx as nx
 import plotly.graph_objects as go
 import plotly.express as px
 
+import math
+
 
 def calculate_bounding_box(center_lat, center_lon, distance_threshold):
-    lat_offset = (distance_threshold * 0.5) / 111111  # Approximate latitude degrees per meter
-    lon_offset = distance_threshold * 0.5 / (111111 * abs(center_lat))  # Approximate longitude degrees per meter
+    'creates a box around the source coordinates '
+    # Approximate latitude degrees per meter
+    lat_offset = (distance_threshold * 0.5) / 111111
+
+    # Approximate longitude degrees per meter, accounting for the latitude
+    lon_offset = (distance_threshold * 0.5) / (111111 * math.cos(math.radians(center_lat)))
+
     north = center_lat + lat_offset
     south = center_lat - lat_offset
     east = center_lon + lon_offset
     west = center_lon - lon_offset
+
     return south, west, north, east
 
 
 def find_roads(south, west, north, east):
+    'using open street map library all the roads within the bounding box are found'
     try:
         api = overpy.Overpass()
         query = f"""
@@ -34,6 +43,7 @@ def find_roads(south, west, north, east):
 
 
 def format_road_data(result):
+    'formats the road data into a series of nodes and edges'
     # Create a graph
     G = nx.Graph()
 
@@ -65,6 +75,7 @@ def format_road_data(result):
 
     return nodes_df, edges_df
 
+'below is just a visulisation of the road data '
 #
 # def plot_road_network(nodes_df, edges_df):
 #     # Create Plotly figure
@@ -104,11 +115,11 @@ def format_road_data(result):
 #     )
 #
 #     fig.show()
-
-
+#
+#
 # # Example usage
-# center_lat = -2.86707 # Latitude of Berlin
-# center_lon = 30.53309  # Longitude of Berlin
+# center_lat = -2.86707 # Latitude of Bugarama
+# center_lon = 30.53309
 # distance_threshold = 1000  # 5 km
 #
 # south, west, north, east = calculate_bounding_box(center_lat, center_lon, distance_threshold)

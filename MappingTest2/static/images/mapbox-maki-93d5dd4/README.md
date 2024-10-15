@@ -99,8 +99,8 @@ After the final review approval, a Maki team member will merge the icon branch t
 
 #### 2: Deploying
 
-1. Move changes from from the [headlog](./CHANGELOG.md#head) to the new version heading
-1. Increment the `version` key in [`package.json`](./package.json)
+1. Move changes from from the [headlog](CHANGELOG.md#head) to the new version heading
+1. Increment the `version` key in [`package.json`](package.json)
 1. Push changes to main
 1. Tag the release in git with `git tag -a vX.X.X -m 'Tag release' && git push --tags`
 1. Publish your changes to npm with [`mbx npm publish`](https://github.com/mapbox/mbxcli/blob/master/docs/commands/npm.md#publishing-deprecating-and-unpublishing-packages)

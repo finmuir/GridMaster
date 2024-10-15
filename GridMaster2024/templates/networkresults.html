@@ -6,8 +6,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A==" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js" integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA==" crossorigin=""></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Didact+Gothic&display=swap" rel="stylesheet">
-    <!-- Your CSS Styles Here -->
     <style>
     body, html {
       height: 100%;
@@ -50,19 +50,20 @@
       width: 200px;
       height: 100%;
       overflow: auto;
-      background-color: rgba(0, 0, 0, 0.5); /* semi-transparent black */
-      display: none; /* initially hidden */
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      z-index: 2;
     }
 
     .sidebar a {
-      display: block; /* Make the links appear below each other */
-      color: #f2f2f2; /* Color of links */
-      padding: 15px; /* Padding inside the sidebar */
-      text-decoration: none; /* Remove underline from links */
+      display: block;
+      color: #f2f2f2;
+      padding: 15px;
+      text-decoration: none;
     }
 
     .sidebar a:hover {
-      background-color: #ddd; /* Change color of links on hover */
+      background-color: #ddd;
       color: black;
     }
 
@@ -76,19 +77,19 @@
       color: #ffffff;
       cursor: pointer;
       outline: none;
-      z-index: 1;
+      z-index: 3;
     }
 
     #map-container {
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 900px;/* Adjust height */
-      width: 1200px; /* Adjust width */
-      position: relative;
+      height: 80%; /* Adjust height */
+      width: 60%; /* Adjust width */
+      position: absolute;
       z-index: 1;
       top: 15%; /* Move down */
-      left: -23%; /* Move left */
+      left: 5%; /* Move left */
     }
 
     #map {
@@ -100,73 +101,66 @@
       border-radius: 10px;
     }
 
-    html, body {
-      height: 100vh; /* Set this to 100vh */
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-
     #content-container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    background-color: rgba(248, 248, 248, 0.8);
-    height: 450px;/* Adjust height */
-    width: 650px; /* Adjust width */
-    position: absolute; /* Changed to absolute */
-    z-index: 1;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    border-radius: 10px;
-    left: 55%;
-    top: 23%;
-    padding-left: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+      background-color: rgba(248, 248, 248, 0.8);
+      height: 30%; /* Adjust height */
+      width: 25%; /* Adjust width */
+      position: absolute; /* Changed to absolute */
+      z-index: 1;
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      border-radius: 10px;
+      left: 70%;
+      top: 30%;
+      padding-left: 20px;
+      overflow: visible;
     }
 
-  .content-wrapper {
-    display: flex;
-    padding-top: 15px;
-    flex-direction: column;
-    width: 100%;
-  }
+    .content-wrapper {
+      display: flex;
+      padding-top: 15px;
+      flex-direction: column;
+      width: 100%;
+    }
 
-  .container-title {
-    margin: auto;
-    margin-top: 1vh;
-    text-align: center;
-    color: #666666;
-  }
+    .container-title {
+      margin: auto;
+      margin-top: 1vh;
+      text-align: center;
+      color: #666666;
+    }
 
-  .data-items {
-    align-self: flex-start;
-  }
+    .data-items {
+      align-self: flex-start;
+    }
 
     .data-item {
       margin-top: 3vh;
-  }
+    }
 
-      .submit-button{
+    .submit-button {
       background-color: #4CAF50;
       color: white;
-      padding: 12px 20px;
+      padding: 2.5% 2.5%;
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 16px;
-      margin-top: 20px;
+      font-size: 20px;
+      margin-top: 5px;
       font-family: 'Didact Gothic', sans-serif;
       text-decoration: none;
-      position: relative;
-      top: 25vh;
-      margin-left: 33vh;
-          width: 55px;
+      position: absolute;
+      left: -20%;
+      top: 70%;
+      margin-left: 30vh;
+      width: 33%;
     }
-
     </style>
 </head>
 <body>
-    <!-- Your HTML Here -->
     <a href="{{ url_for('welcome') }}">
       <img src="{{ url_for('static', filename='images/Gridmaster.png') }}" alt="Logo">
     </a>
@@ -176,77 +170,135 @@
     <div class="page-container">
         <div id="background"></div>
         <div id="sidebar" class="sidebar">
+            <a href="{{ url_for('welcome') }}">Home</a>
             <a href="https://github.com/finmuir/GridMaster">GitHub</a>
             <a href="#">About Us</a>
             <a href="#">Contact</a>
         </div>
         <div id="map-container">
-            <h2 style="position: absolute; top: -80px; left: 50%; transform: translateX(-50%); z-index: 2; color: #aaa;">Minigrid Implementation:</h2>
             <div id="map"></div>
-            <div id="chart"></div>
         </div>
     </div>
 
-<div id="content-container">
-    <div class="content-wrapper">
-        <h2 class="container-title">Implementation Data</h2>
-        <div class="data-items">
-            <div class="data-item">Total Network Power Demand: {{ total_Pdem }}</div>
-            <div class="data-item">Network Cost: {{ total_cost }}</div>
-            <div class="data-item">Total Length: {{ total_length }}</div>
+    <div id="content-container">
+        <div class="content-wrapper">
+            <h2 class="container-title">Cluster Information</h2>
+            <form method="get" action="{{ url_for('gensizerinputs') }}">
+                  <input type="submit" value="Gensizer" class="submit-button">
+            </form>
+
         </div>
-        <form action="{{ url_for('networkresults') }}">
-            <input type="Confirm" value="Confirm" class = "submit-button">
-        </form>
     </div>
-</div>
 
     <script>
+  // Get JSON data from Flask template variables
+const clusterDataJson = {{ cluster_data | tojson | safe }};
+const roadDataJson = {{ road_data | tojson | safe }};
+const edgesJson = {{ edges | tojson | safe }}; // Make sure you have this line
 
-    var network_design_points = {{ network_design_points | safe }};
-    network_design_points.forEach(point => {
-        var networkMarkerIcon = L.icon({
-            iconUrl: 'https://cdn.rawgit.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            popupAnchor: [1, -34],
-            shadowSize: [41, 41]
-        });
+// Parse JSON data
+const clusterData = JSON.parse(clusterDataJson);
+const roadData = JSON.parse(roadDataJson);
+const edges = JSON.parse(edgesJson); // Parsing edges
 
-        var networkMarker = L.marker([point.lat, point.lon], {icon: networkMarkerIcon}).addTo(map);
-    });
+console.log("Parsed edges:", edges); // Inspect edges data
 
-    var marker = L.marker([point.lat, point.lon], {icon: markerIcon, draggable: 'true'}).addTo(map);
+// Create traces for Plotly
+const customerTrace = {
+    type: 'scattermapbox',
+    mode: 'markers',
+    lat: clusterData.filter(d => d.Type === 'customer').map(d => d.y),
+    lon: clusterData.filter(d => d.Type === 'customer').map(d => d.x),
+    marker: { size: 4, color: 'blue' },
+    name: 'Customers'
+};
 
-    marker.on('dragend', function (e) {
-        var lat = marker.getLatLng().lat,
-            lon = marker.getLatLng().lng,
-            label = point.label;
+const poleTrace = {
+    type: 'scattermapbox',
+    mode: 'markers',
+    lat: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.y),
+    lon: clusterData.filter(d => d.Type === 'customer_pole').map(d => d.x),
+    marker: { size: 6, color: 'red' },
+    name: 'Poles'
+};
 
-        // Send the new position to the server
-        var xhr = new XMLHttpRequest();
-        xhr.open('POST', '/update-marker', true);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-        xhr.send('lat=' + encodeURIComponent(lat) + '&lng=' + encodeURIComponent(lon) + '&label=' + encodeURIComponent(label));
-    });
+const roadNodesTrace = {
+    type: 'scattermapbox',
+    mode: 'markers',
+    lat: roadData.filter(d => d.Type === 'road_node').map(d => d.y),
+    lon: roadData.filter(d => d.Type === 'road_node').map(d => d.x),
+    marker: { size: 4, color: 'black' },
+    name: 'Road Nodes'
+};
+
+// Create edge traces
+const edgeTraces = edges.map(edge => {
+    return {
+        type: 'scattermapbox',
+        mode: 'lines', // Only draw lines
+        lat: edge.lat,
+        lon: edge.lon,
+        line: { width: 2, color: 'green' },
+        name: 'Road Edge' // Customize as needed
+    };
 });
 
-        var sidebarButton = document.getElementById('sidebar-button');
-        var closeButton = document.getElementById('close-button');
-        var sidebar = document.getElementById('sidebar');
+// Define layout
+const layout = {
+    mapbox: {
+        style: 'open-street-map',
+        center: { lat: clusterData[0]?.y || 0, lon: clusterData[0]?.x || 0 },
+        zoom: 12
+    },
+    margin: { r: 0, t: 0, l: 0, b: 0 }
+};
 
-        sidebarButton.onclick = function() {
-            sidebar.style.display = 'block';
-            sidebarButton.style.display = 'none';
-            closeButton.style.display = 'block';
-        }
+// Create plot
+Plotly.newPlot('map', [customerTrace, poleTrace, roadNodesTrace, ...edgeTraces], layout);
 
-        closeButton.onclick = function() {
-            sidebar.style.display = 'none';
-            closeButton.style.display = 'none';
-            sidebarButton.style.display = 'block';
-        }
+{#// Create traces for road edges#}
+{#const roadEdgesTrace = {#}
+{#    type: 'scattermapbox',#}
+{#    mode: 'lines',#}
+{#    lat: roadData.filter(d => d.Type === 'road_edge').flatMap(d => d.y),#}
+{#    lon: roadData.filter(d => d.Type === 'road_edge').flatMap(d => d.x),#}
+{#    line: { width: 1, color: 'black' },#}
+{#    name: 'Road Edges'#}
+        document.getElementById('clusterData').value = JSON.stringify(clusterData);
+        document.getElementById('roadData').value = JSON.stringify(roadData);
+
+        {#centroids.forEach(centroid => {#}
+{#    const edges = clusterData#}
+{#        .filter(d => d.Type === 'customer' && d.Cluster === centroid.Cluster)#}
+{#        .map(customer => ({#}
+{#            lon: [centroid.x, customer.x],#}
+{#            lat: [centroid.y, customer.y]#}
+{#        }));#}
+{##}
+{#    edges.forEach(edge => {#}
+{#        edgeTraces.push({#}
+{#            type: 'scattermapbox',#}
+{#            mode: 'lines',#}
+{#            lat: edge.lat,#}
+{#            lon: edge.lon,#}
+{#            line: { width: 2, color: 'green' },#}
+{#            name: `Edges from Cluster ${centroid.Cluster}`#}
+{#        });#}
+{#    });#}
+{#});#}
+
+{#const NodesTrace = {#}
+{#    type: 'scattermapbox',#}
+{#    mode: 'markers',#}
+{#    lat: nodes.filter(d => d.Type === 'road').map(d => d.y),#}
+{#    lon: nodes.filter(d => d.Type === 'road').map(d => d.x),#}
+{#    marker: { size: 4, color: 'green' },#}
+{#    name: 'Network Nodes'#}
+{#};#}
+
+
+      // Get JSON data from Flask template variables
+
     </script>
 </body>
 </html>
